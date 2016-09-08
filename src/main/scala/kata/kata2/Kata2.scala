@@ -1,6 +1,9 @@
 package kata.kata2
 
 import scala.annotation.tailrec
+import play.api.libs.iteratee._
+import scala.concurrent._
+import scala.concurrent.duration._
 
 object Kata2 {
   
@@ -27,6 +30,8 @@ object Kata2 {
     go(0,source.length-1) 
   }
   
+
+  
   def iterativeChop(target: Int, source: Array[Int]) : Int = {
     if(source.length == 0) {
       return -1
@@ -46,19 +51,52 @@ object Kata2 {
     return -1
   }
   
-  //divide the array
+  //divide the array, not very effective I guess and also not tail recursive: "hello stack overflow"
   def sliceAndDiceChop(target: Int, source: Array[Int]) : Int = {
-    if(source.length == 0) {
-      return -1
+    
+    //this solution is not tailrec
+    def go(source: Array[Int]): Option[Int] = {
+      if(source.length == 0) {
+        return None
+      }
+      val middleIndex = source.length / 2
+      if (source(middleIndex) == target) {
+        Some(middleIndex)
+      } else if(source(middleIndex) < target) {
+        go(source.drop(middleIndex+1)).map { x => x +  middleIndex+1}
+      } else {
+        go(source.take(middleIndex))
+      }
     }
     
-    def go(): Int = ???
-    
-    go()
+    go(source).getOrElse(-1)
     
   }
   
+  //divide the array, not very effective I guess, but tail recursive
+  def sliceAndDiceChopTailRec(target: Int, source: Array[Int]) : Int = {
+    
+    @annotation.tailrec
+    def go(source: Array[Int], acc:Int): Option[Int] = {
+      if(source.length == 0) {
+        return None
+      }
+      val middleIndex = source.length / 2
+      if (source(middleIndex) == target) {
+        Some(acc + middleIndex)
+      } else if(source(middleIndex) < target) {
+        go(source.drop(middleIndex+1), acc + middleIndex+1)
+      } else {
+        go(source.take(middleIndex),acc)
+      }
+    }
+    
+    go(source,0).getOrElse(-1)
+    
+  }  
   
+  
+
   
   
   

@@ -3,3 +3,6 @@ project/target/
 target/
 .classpath
 .project
+/bin/
+.cache-main
+.cache-tests
