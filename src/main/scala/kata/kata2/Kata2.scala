@@ -1,9 +1,7 @@
 package kata.kata2
 
 import scala.annotation.tailrec
-import play.api.libs.iteratee._
-import scala.concurrent._
-import scala.concurrent.duration._
+
 
 object Kata2 {
   
