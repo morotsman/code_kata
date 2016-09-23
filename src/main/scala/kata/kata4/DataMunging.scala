@@ -4,41 +4,57 @@ import scala.io.Source
 import java.io.InputStream
 
 object DataMunging {
-  
+
   type Label = String
-  type Diff = Float
-  
-  def columns(line: String): Array[String] = 
+  type Result = Float
+
+  def columns(line: String): Array[String] =
     line.trim.split(" ").filter(_ != "")
-    
-  def getLines(fileName: String): Iterator[String] = {
-    val stream : InputStream = getClass.getResourceAsStream(fileName)
-    Source.fromInputStream(stream).getLines()
-  }    
-  
-  def temperatureDiff(columns: Array[String] ): (Label,Diff) = {
-    val max = columns(1).replace("*", "").toFloat
-    val min = columns(2).replace("*", "").toFloat
-    (columns(0),max-min)
+
+  def getRows(fileName: String): Iterator[Array[String]] = {
+    val stream: InputStream = getClass.getResourceAsStream(fileName)
+    Source.fromInputStream(stream).getLines().map(columns)
   }
-  
-  def minTemperatureDiff(lines : Iterator[String]): (Label,Diff) = {
-    lines.map(columns).map(temperatureDiff).reduceLeft((a,b) =>if(a._2 < b._2) a else b)
+
+  def columnSelector(columnIndexes: Int*): Array[String] => Array[String] =
+    columns => {
+      for (
+        columnIndex <- columnIndexes.toArray
+      ) yield columns(columnIndex)
+    }
+
+  def resultCreator(columns: Array[String]): (Label, Result) =
+    (columns(0), columns(1).toFloat - columns(2).toFloat)
+
+  def temperatureFilter(columns: Array[String]): Boolean = true
+
+  def temperatureMapper(columns: Array[String]): (Label, Result) =
+    (columnSelector(0, 1, 2)
+      andThen (a => Array(a(0), a(1).replace("*", ""), a(2).replace("*", "")))
+      andThen resultCreator)(columns)
+
+  def footballFilter(columns: Array[String]): Boolean = columns.length > 8
+
+  def footballMapper(columns: Array[String]): (Label, Result) =
+    (columnSelector(1, 6, 8) andThen resultCreator)(columns)
+
+  def reducer(a: (Label, Result), b: (Label, Result)): (Label, Result) =
+    if (Math.abs(a._2) < Math.abs(b._2)) a else b
+
+  def main(args: Array[String]): Unit = {
+
+    val minTemperatureDiff = getRows("/weather.dat").drop(2)
+      .filter(temperatureFilter)
+      .map(temperatureMapper)
+      .reduceLeft(reducer)
+    println(minTemperatureDiff)
+
+    val minGoalDiff = getRows("/football.dat").drop(1)
+      .filter(footballFilter)
+      .map(footballMapper)
+      .reduceLeft(reducer)
+    println(minGoalDiff)
+
   }
-  
-  def goalDiff(columns: Array[String] ): (Label,Diff) = {
-    val max = columns(6).toFloat
-    val min = columns(8).toFloat
-    (columns(1),max-min)
-  }
-  
-  def minGoalDiff(lines: Iterator[String]): (Label,Diff) = {
-    lines.map(columns).filter(_.length > 8).map(goalDiff).reduceLeft((a,b) =>if(Math.abs(a._2) < Math.abs(b._2)) a else b)
-  }
-  
-  def main(args: Array[String]): Unit = { 
-    println(minTemperatureDiff(getLines("/weather.dat").drop(2)))
-    println(minGoalDiff(getLines("/football.dat").drop(1)))
-  }
-  
+
 }

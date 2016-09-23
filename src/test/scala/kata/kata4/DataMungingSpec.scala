@@ -17,12 +17,7 @@ class DataMungingSpec extends FlatSpec with Matchers {
     DataMunging.columns("   9  86    32*   59       6  61.5       0.00         240  7.6 220  12  6.0  78 46 1018.6") should be (Array("9", "86", "32*", "59", "6", "61.5", "0.00", "240", "7.6", "220", "12", "6.0", "78", "46", "1018.6"))
   }
   
-  "temperatureSpread" should "return temperature spread" in { 
-    DataMunging.temperatureDiff(Array("a","2","1")) should be (("a",1))
-    DataMunging.temperatureDiff(Array("a","2.0","1")) should be (("a",1))
-    DataMunging.temperatureDiff(Array("a","2*","1")) should be (("a",1))
-    DataMunging.temperatureDiff(Array("a","2","1*")) should be (("a",1))
-  }
+
   
   
   
