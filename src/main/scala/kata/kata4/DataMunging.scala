@@ -10,11 +10,22 @@ object DataMunging {
 
   def toColumns(line: String): Array[String] =
     line.trim.split(" ").filter(_ != "")
-
-  def getRows(fileName: String): Iterator[Array[String]] = {
-    val stream: InputStream = getClass.getResourceAsStream(fileName)
-    Source.fromInputStream(stream).getLines().map(toColumns)
+    
+  def getFile[A](fileName: String)(f : Source => A) : A = {
+    var stream: Option[InputStream] = None
+    var source: Option[Source] = None
+    try {
+      stream = Some(getClass.getResourceAsStream(fileName))
+      source = Some(Source.fromInputStream(stream.get))
+      f(source.get)
+    } finally {
+      source.foreach(_.close)
+      stream.foreach(_.close)
+    }
   }
+  
+  def getRows(source: Source): Iterator[Array[String]] = 
+    source.getLines().map(toColumns)
 
   def columnSelector(columnIndexes: Int*): Array[String] => Array[String] =
     columns => {
@@ -38,17 +49,17 @@ object DataMunging {
       if (num.lt(num.abs(a._2), num.abs(b._2))) a else b
        
   def main(args: Array[String]): Unit = {
-        
-    val minTemperatureDiff = getRows("/weather.dat").drop(2)
-      .map(temperatureMapper)
-      .reduceLeft(reducer[Float])
+      
+    val minTemperatureDiff = getFile("/weather.dat") { source =>  
+      getRows(source).drop(2).map(temperatureMapper).reduceLeft(reducer[Float]) 
+    }   
     println(minTemperatureDiff)
-
-    val minGoalDiff = getRows("/football.dat").drop(1)
-      .filter(footballFilter)
-      .map(footballMapper)
-      .reduceLeft(reducer[Int])
+    
+    val minGoalDiff = getFile("/football.dat") { source =>  
+      getRows(source).drop(1).filter(footballFilter).map(footballMapper).reduceLeft(reducer[Int]) 
+    }   
     println(minGoalDiff)
+
 
   }
 
