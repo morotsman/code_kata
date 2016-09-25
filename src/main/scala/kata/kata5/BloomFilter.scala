@@ -7,14 +7,18 @@ import scala.io.StdIn
 import java.io.InputStream
 
 class BloomFilter(size: Int, nrHashes: Int) {
+  
+  if(nrHashes > 4) {
+    throw new RuntimeException("To many hashes, at most 4 is permitted")
+  }
 
   val bitmap: Array[Boolean] = new Array(size)
 
   private def md5(s: String): Array[Byte] =
     MessageDigest.getInstance("MD5").digest(s.getBytes)
 
-  private def splitArray(a: Array[Byte], nrOfParts: Int): Iterator[Array[Byte]] =
-    a.grouped(a.size / nrOfParts)
+  private def splitArray(a: Array[Byte], nrOfParts: Int): Iterator[Array[Byte]] = 
+    a.grouped(a.size / nrOfParts).filter(_.length == a.size / nrOfParts)
 
   private def createHashes(s: String): Iterator[Int] = {
     splitArray(md5(s), nrHashes).map(a => (new BigInteger(a)).mod(new BigInteger(size + "")).toString.toInt)
@@ -57,21 +61,7 @@ object BloomFilter {
     getFile("/wordlist.txt") { s =>
       s.getLines().foreach(bloomFilter.addKey(_))
     }
-
     
-    /*
-    while(true) {
-      println("Write a word: ");
-      val word = StdIn.readLine
-      if(bloomFilter.hasKey(word)) {
-        println(word + " is an english word!")
-      } else {
-        println(word + " is not an english word.")
-      }
-      
-    }
-   
-    */
 
     println(bloomFilter.ratioPrecentage)
     val falsePositives = (1 to 100000)
@@ -79,7 +69,6 @@ object BloomFilter {
       .map(bloomFilter.hasKey)
       .map(a => if(a) 1 else 0)
       .reduceLeft((a,b) => a + b)
-      //.foreach(println)
       
     println(falsePositives)
 
