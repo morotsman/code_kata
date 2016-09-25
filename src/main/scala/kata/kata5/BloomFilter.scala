@@ -9,7 +9,7 @@ import java.io.InputStream
 class BloomFilter(size: Int, nrHashes: Int) {
   
   if(nrHashes > 4) {
-    throw new RuntimeException("To many hashes, at most 4 is permitted")
+    throw new RuntimeException("To many hashes, at most 4 are permitted")
   }
 
   val bitmap: Array[Boolean] = new Array(size)
