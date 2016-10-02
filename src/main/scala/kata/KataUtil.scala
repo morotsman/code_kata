@@ -4,8 +4,8 @@ import scala.io.Source
 import java.io.InputStream
 
 object KataUtil {
-  
-    def getFile[A](fileName: String)(f: Source => A): A = {
+
+  def getFile[A](fileName: String)(f: Source => A): A = {
     var stream: Option[InputStream] = None
     var source: Option[Source] = None
     try {
@@ -17,5 +17,6 @@ object KataUtil {
       stream.foreach(_.close)
     }
   }
+  
 
 }
