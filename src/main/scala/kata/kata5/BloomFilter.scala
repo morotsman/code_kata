@@ -5,22 +5,37 @@ import java.math.BigInteger
 import scala.io.Source
 import scala.io.StdIn
 import java.io.InputStream
+import kata._
 
 class BloomFilter(size: Int, nrHashes: Int) {
-  
-  if(nrHashes > 4) {
-    throw new RuntimeException("To many hashes, at most 4 are permitted")
-  }
+  require(nrHashes<=16, "Max 16 hashes may be used with this implementation.")  
 
   val bitmap: Array[Boolean] = new Array(size)
+  val partsPerSubArray = numberDivider(16, nrHashes)
 
   private def md5(s: String): Array[Byte] =
     MessageDigest.getInstance("MD5").digest(s.getBytes)
+    
+  def numberDivider(number:Int, parts:Int): List[Int] = {
+    val itemsPerPart = List.fill(parts)(number/parts)
+    val leftovers = List.fill(number % parts)(1)
+    itemsPerPart.zipAll(leftovers,0,0).map(a => a._1 + a._2)
+  }
+ 
+  def splitArray[A](array: Array[A], parts: Int): List[Array[A]] = {
+    @annotation.tailrec
+    def go(parts: List[Int], array: Array[A], acc: List[Array[A]]): List[Array[A]] = parts match {
+      case Nil => acc
+      case (x::xs) => {
+        val r = array.slice(0,x)
+        go(parts.drop(1), array.drop(x), r::acc)
+      }
+    }
+   
+    go(partsPerSubArray, array, Nil).reverse
+  }    
 
-  private def splitArray(a: Array[Byte], nrOfParts: Int): Iterator[Array[Byte]] = 
-    a.grouped(a.size / nrOfParts).filter(_.length == a.size / nrOfParts)
-
-  private def createHashes(s: String): Iterator[Int] = {
+  private def createHashes(s: String): List[Int] = {
     splitArray(md5(s), nrHashes).map(a => (new BigInteger(a)).mod(new BigInteger(size + "")).toString.toInt)
   }
 
@@ -37,42 +52,32 @@ class BloomFilter(size: Int, nrHashes: Int) {
 
 object BloomFilter {
 
+  def apply(size: Int, nrHashes: Int): BloomFilter = new BloomFilter(size,nrHashes)
+
+}
+
+object Main {
+  
   def wordGenerator(): String = {
     val r = scala.util.Random
     r.nextString(5)
-  }
+  } 
+  
+ def main(args: Array[String]): Unit = {
+    val bloomFilter = BloomFilter(8000000, 5);
 
-  def getFile[A](fileName: String)(f: Source => A): A = {
-    var stream: Option[InputStream] = None
-    var source: Option[Source] = None
-    try {
-      stream = Some(getClass.getResourceAsStream(fileName))
-      source = Some(Source.fromInputStream(stream.get, "utf-8"))
-      f(source.get)
-    } finally {
-      source.foreach(_.close)
-      stream.foreach(_.close)
-    }
-  }
-
-  def main(args: Array[String]): Unit = {
-    val bloomFilter = new BloomFilter(8000000, 4);
-
-    getFile("/wordlist.txt") { s =>
+    KataUtil.getFile("/wordlist.txt") { s =>
       s.getLines().foreach(bloomFilter.addKey(_))
     }
     
 
     println(bloomFilter.ratioPrecentage)
-    val falsePositives = (1 to 100000)
+    val falsePositives = (1 to 1000000)
       .map(i => wordGenerator)
       .map(bloomFilter.hasKey)
       .map(a => if(a) 1 else 0)
       .reduceLeft((a,b) => a + b)
       
     println(falsePositives)
-
-
-  }
-
+  } 
 }
