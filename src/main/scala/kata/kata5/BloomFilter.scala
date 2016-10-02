@@ -13,16 +13,26 @@ class BloomFilter(size: Int, nrHashes: Int) {
   val bitmap: Array[Boolean] = new Array(size)
   val partsPerSubArray = numberDivider(16, nrHashes)
 
-  private def md5(s: String): Array[Byte] =
-    MessageDigest.getInstance("MD5").digest(s.getBytes)
+  def addKey(s: String): Unit =
+    createHashes(s).foreach(bitmap(_) = true)
+
+  def hasKey(s: String): Boolean =
+    createHashes(s).forall(bitmap(_) == true)
+
+  def ratioPrecentage(): Float =
+    (bitmap.filter(_ == true).size).toFloat / size.toFloat * 100
     
-  def numberDivider(number:Int, parts:Int): List[Int] = {
+  private def numberDivider(number:Int, parts:Int): List[Int] = {
     val itemsPerPart = List.fill(parts)(number/parts)
     val leftovers = List.fill(number % parts)(1)
     itemsPerPart.zipAll(leftovers,0,0).map(a => a._1 + a._2)
   }
  
-  def splitArray[A](array: Array[A], parts: Int): List[Array[A]] = {
+  private def createHashes(s: String): List[Int] = {
+    splitArray(md5(s), nrHashes).map(a => (new BigInteger(a)).mod(new BigInteger(size + "")).toString.toInt)
+  }
+ 
+  private def splitArray[A](array: Array[A], parts: Int): List[Array[A]] = {
     @annotation.tailrec
     def go(parts: List[Int], array: Array[A], acc: List[Array[A]]): List[Array[A]] = parts match {
       case Nil => acc
@@ -34,19 +44,12 @@ class BloomFilter(size: Int, nrHashes: Int) {
    
     go(partsPerSubArray, array, Nil).reverse
   }    
+  
+  
+  private def md5(s: String): Array[Byte] =
+    MessageDigest.getInstance("MD5").digest(s.getBytes)
 
-  private def createHashes(s: String): List[Int] = {
-    splitArray(md5(s), nrHashes).map(a => (new BigInteger(a)).mod(new BigInteger(size + "")).toString.toInt)
-  }
 
-  def addKey(s: String): Unit =
-    createHashes(s).foreach(bitmap(_) = true)
-
-  def hasKey(s: String): Boolean =
-    createHashes(s).forall(bitmap(_) == true)
-
-  def ratioPrecentage(): Float =
-    (bitmap.filter(_ == true).size).toFloat / size.toFloat * 100
 
 }
 
