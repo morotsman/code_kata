@@ -1,17 +1,17 @@
 package kata.kata8
 
 import kata.KataUtil
-import scala.collection.parallel.immutable.ParSet
+import scala.collection.parallel.immutable.ParSeq
 
 object ComposedWordFinderReadable {
 
-  def combinedSixLetterWords: Set[(String,String,String)] = {
+  def combinedSixLetterWords: List[(String,String,String)] = {
     val sixLetterWords = KataUtil.getFile("/wordlist.txt") { s =>
       s.getLines.filter(_.length == 6).toSet //to lower case?
     }
 
     val lessThenSixLetterWords = KataUtil.getFile("/wordlist.txt") { s =>
-      s.getLines.filter(_.length < 6).toSet
+      s.getLines.filter(_.length < 6).toList
     }  
 
     for (
@@ -25,15 +25,14 @@ object ComposedWordFinderReadable {
 }
 
 object ComposedWordFinderFast {
-  def combinedSixLetterWords: ParSet[(String,String,String)] = {
+  def combinedSixLetterWords: ParSeq[(String,String,String)] = {
     val sixLetterWords = KataUtil.getFile("/wordlist.txt") { s =>
       s.getLines.filter(_.length == 6).toSet //to lower case?
     }
 
     val lessThenSixLetterWords = KataUtil.getFile("/wordlist.txt") { s =>
-      s.getLines.filter(_.length < 6).toSet
+      s.getLines.filter(_.length < 6).toList
     }
-    val endTime1 = System.currentTimeMillis
 
     for (
       word1 <- lessThenSixLetterWords.par;
@@ -43,6 +42,9 @@ object ComposedWordFinderFast {
 
   }
 }
+
+
+
 
 object Main {
 
