@@ -1,7 +1,10 @@
-aaa
-bbb
-Aaa
-zzz
-eee
+1234567
+aa
+bb
+cc
+dd
 aaabbb
-eeeAaa
+bbaabb
+aabbcc
+ccbbaa
+aabbccdd
