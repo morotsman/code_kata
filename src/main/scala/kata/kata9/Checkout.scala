@@ -9,9 +9,9 @@ case class Checkout(rules: Map[String, Int], items: List[String] = List()) {
   }
 
   def total: Option[Int] =
-    items.sorted.groupBy(identity).values.map(priceForItems).foldLeft(Some(0): Option[Int])(addOption)
+    items.sorted.groupBy(identity).values.map(priceForItem).foldLeft(Some(0): Option[Int])(addOption)
 
-  private def priceForItems(items: List[String]): Option[Int] = {
+  private def priceForItem(items: List[String]): Option[Int] = {
 
     def go(items: List[String], leftovers: List[String]): Option[Int] = {
       (items, applyRule(items.mkString)) match {
@@ -19,7 +19,7 @@ case class Checkout(rules: Map[String, Int], items: List[String] = List()) {
         case (x :: xs, None) => go(items.drop(1), items.head :: leftovers)
         case (_, Some(p1)) =>
           if (leftovers.size > 0)
-            priceForItems(leftovers).map(p2 => p1 + p2)
+            priceForItem(leftovers).map(p2 => p1 + p2)
           else
             Some(p1)
       }
