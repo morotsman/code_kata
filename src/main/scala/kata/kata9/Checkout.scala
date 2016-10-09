@@ -1,7 +1,6 @@
 package kata.kata9
 
-
-case class Checkout(rules: Map[String,Int], items: List[String] = List()) {
+case class Checkout(rules: Map[String, Int], items: List[String] = List()) {
 
   assert(rules.size > 0)
 
@@ -9,13 +8,10 @@ case class Checkout(rules: Map[String,Int], items: List[String] = List()) {
     Checkout(rules, item :: items)
   }
 
-  private def addOption(a: Option[Int], b: Option[Int]) =
-    a.flatMap(v1 => b.map(v2 => v1 + v2))
+  def total: Option[Int] =
+    items.sorted.groupBy(identity).values.map(priceForItems).foldLeft(Some(0): Option[Int])(addOption)
 
-  private def applyRule(item: String): Option[Int] =
-    rules.get(item)
-
-  def priceForItems(items: List[String]): Option[Int] = {
+  private def priceForItems(items: List[String]): Option[Int] = {
 
     def go(items: List[String], leftovers: List[String]): Option[Int] = {
       (items, applyRule(items.mkString)) match {
@@ -32,8 +28,11 @@ case class Checkout(rules: Map[String,Int], items: List[String] = List()) {
     go(items, List())
   }
 
-  def total: Option[Int] =
-    items.sorted.groupBy(identity).values.map(priceForItems).foldLeft(Some(0): Option[Int])(addOption)
+  private def applyRule(item: String): Option[Int] =
+    rules.get(item)
+
+  private def addOption(a: Option[Int], b: Option[Int]) =
+    a.flatMap(v1 => b.map(v2 => v1 + v2))
 
 }
 
