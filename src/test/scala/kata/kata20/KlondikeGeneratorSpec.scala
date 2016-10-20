@@ -8,48 +8,105 @@ class KlondikeGeneratorSpec extends FlatSpec with Matchers {
   "A valid klondike board" should "contain 52 cards" in {
    
     val board:KlondikeBoard = KlondikeBoardGenerator.generate
-    (board.discardPile.length + board.stockPile.length + board.foundationPile1.length + board.foundationPile2.length + board.foundationPile3.length
-    + board.foundationPile4.length + board.tableauPile1.length + board.tableauPile2.length + board.tableauPile3.length + board.tableauPile4.length
-    + board.tableauPile5.length + board.tableauPile6.length + board.tableauPile7.length) should be(52)
+    board.piles.map(_.cards.size).sum should be(52)
    
   }
   
-  "A valid klondike board" should "contain 1 card in tableuPile1" in {
+  def validateTableuPile(nr: Int): Unit = {
     val board:KlondikeBoard = KlondikeBoardGenerator.generate
-    board.tableauPile1.length should be(1) 
+    val pile = board.piles.filter(_.pileType == Piles.TableauPile).filter(_.cards.length == nr)
+    pile.length should be(1)
+    pile.head.cards.head.hidden should be(false)
+    pile.head.cards.drop(1).forall(_.hidden) should be(true)
+  }
+  
+  "A valid klondike board" should "contain 1 card in a tableuPile and the first card should be open" in {
+    val board:KlondikeBoard = KlondikeBoardGenerator.generate
+    validateTableuPile(1)
   }  
 
-  "A valid klondike board" should "contain 2 cards in tableuPile2" in {
+  "A valid klondike board" should "contain 2 card in a tableuPile and the first card should be open" in {
     val board:KlondikeBoard = KlondikeBoardGenerator.generate
-    board.tableauPile2.length should be(2) 
+    validateTableuPile(2)
   } 
   
-  "A valid klondike board" should "contain 3 cards in tableuPile2" in {
+  "A valid klondike board" should "contain 3 card in a tableuPile and the first card should be open" in {
     val board:KlondikeBoard = KlondikeBoardGenerator.generate
-    board.tableauPile3.length should be(3) 
+    validateTableuPile(3)
   }   
   
-  "A valid klondike board" should "contain 4 cards in tableuPile2" in {
+  "A valid klondike board" should "contain 4 card in a tableuPile and the first card should be open" in {
     val board:KlondikeBoard = KlondikeBoardGenerator.generate
-    board.tableauPile4.length should be(4) 
+    validateTableuPile(4)
   } 
   
-  "A valid klondike board" should "contain 5 cards in tableuPile2" in {
+  "A valid klondike board" should "contain 5 card in a tableuPile and the first card should be open" in {
     val board:KlondikeBoard = KlondikeBoardGenerator.generate
-    board.tableauPile5.length should be(5) 
+    validateTableuPile(5)
   }    
   
-  "A valid klondike board" should "contain 6 cards in tableuPile2" in {
+  "A valid klondike board" should "contain 6 card in a tableuPile and the first card should be open" in {
     val board:KlondikeBoard = KlondikeBoardGenerator.generate
-    board.tableauPile6.length should be(6) 
+    validateTableuPile(6)
   }   
   
-  "A valid klondike board" should "contain 7 cards in tableuPile2" in {
+  "A valid klondike board" should "contain 7 card in a tableuPile and the first card should be open" in {
     val board:KlondikeBoard = KlondikeBoardGenerator.generate
-    board.tableauPile7.length should be(7) 
-  }     
+    validateTableuPile(7)
+  } 
   
-
+  "A valid klondike board" should "contain 24 cards in the stock pile" in {
+    val board:KlondikeBoard = KlondikeBoardGenerator.generate
+    board.piles.filter(_.pileType == Piles.StockPile).head.cards.length should be(24)
+    board.piles.filter(_.pileType == Piles.StockPile).head.cards.head.hidden should be(true)
+  }   
+  
+  "A valid klondike board" should "contain 0 cards in the discard pile" in {
+    val board:KlondikeBoard = KlondikeBoardGenerator.generate
+    board.piles.filter(_.pileType == Piles.DiscardPile).head.cards.length should be(0)
+  } 
+  
+  "A valid klondike board" should "contain 0 cards in the foundation piles" in {
+    val board:KlondikeBoard = KlondikeBoardGenerator.generate
+    board.piles.filter(_.pileType == Piles.FoundationPile).forall(_.cards.length == 0) should be(true)
+  }    
+  
+  /****************Rules*****************/
+  
+  "An empty stock pile" should "give a valid move to move all cards in the discard pile to the stock pile" in {
+    val foundationPile1 = Pile(Piles.FoundationPile, List());
+    val foundationPile2 = Pile(Piles.FoundationPile, List());
+    val foundationPile3 = Pile(Piles.FoundationPile, List());
+    val foundationPile4 = Pile(Piles.FoundationPile, List());
+    val tableauPile1 = Pile(Piles.TableauPile, List());
+    val tableauPile2 = Pile(Piles.TableauPile,List());
+    val tableauPile3 = Pile(Piles.TableauPile,List());
+    val tableauPile4 = Pile(Piles.TableauPile,List());
+    val tableauPile5 = Pile(Piles.TableauPile,List());
+    val tableauPile6 = Pile(Piles.TableauPile,List());
+    val tableauPile7 = Pile(Piles.TableauPile,List());
+    val stockPile = Pile(Piles.StockPile, List());
+    
+    var discardPile = Pile(Piles.DiscardPile,List())
+    var board = KlondikeBoard(List(foundationPile1, foundationPile2, foundationPile3, foundationPile4,
+                         tableauPile1,tableauPile2,tableauPile3,tableauPile4,
+                         tableauPile5,tableauPile6,tableauPile7, discardPile, stockPile))        
+    board.legalMoves().length should be(0)
+    
+    discardPile = Pile(Piles.DiscardPile,List(Card(Suite.Clubs, 2, true)))
+    board = KlondikeBoard(List(foundationPile1, foundationPile2, foundationPile3, foundationPile4,
+                         tableauPile1,tableauPile2,tableauPile3,tableauPile4,
+                         tableauPile5,tableauPile6,tableauPile7, discardPile, stockPile))
+    board.legalMoves().length should be(1)
+    board.legalMoves() should be(List(Move(discardPile,stockPile,1)))
+    
+    discardPile = Pile(Piles.DiscardPile,List(Card(Suite.Clubs, 2, true),Card(Suite.Clubs, 3, true),Card(Suite.Clubs, 4, true)))
+    board = KlondikeBoard(List(foundationPile1, foundationPile2, foundationPile3, foundationPile4,
+                         tableauPile1,tableauPile2,tableauPile3,tableauPile4,
+                         tableauPile5,tableauPile6,tableauPile7, discardPile, stockPile))
+    board.legalMoves().length should be(1)
+    board.legalMoves() should be(List(Move(discardPile,stockPile,3)))    
+  }   
   
 
 }
