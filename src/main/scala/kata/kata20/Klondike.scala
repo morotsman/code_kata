@@ -12,9 +12,6 @@ object Suite extends Enumeration {
   val Hearts, Spades, Diamonds, Clubs = Value
 }
 
-object Piles extends Enumeration {
-  val StockPile, DiscardPile, FoundationPile, TableauPile = Value
-}
 
 trait Board {
   def legalMoves(): List[Move];
@@ -28,33 +25,49 @@ case class Game(val board: Board) {
 }
 
 
-case class KlondikeBoard(val piles: List[Pile]) extends Board {
+case class KlondikeBoard(val stockPile: StockPile, discardPile: DiscardPile, tableauPiles : List[TableauPile], foundationPiles: List[FoundationPile]) extends Board {
+  
 
   private def stockIsEmpty: List[Move] =
-  {
-    val stockPile = piles.find(_.pileType == Piles.StockPile).get
-    val discardPile = piles.find(_.pileType == Piles.DiscardPile).get
     if (stockPile.cards.length == 0 && discardPile.cards.length > 0) {
       List(Move(discardPile, stockPile, discardPile.cards.length))
     } else {
       List()
     }
-  }
+ 
+  
+  private def takeCardFromStock: List[Move] = 
+    if(stockPile.cards.length> 0) {
+      List(Move(stockPile, discardPile, 1))
+    } else {
+      List()
+    }
     
 
   def legalMoves(): List[Move] = 
-    stockIsEmpty
+    stockIsEmpty ::: takeCardFromStock
   
-  def makeMove(move: Move): Board = {
+  def makeMove(move: Move): Board = ???
+  /*
+  {
     val fromPileCards = move.from.cards.drop(move.numberOfCards)
     val toPileCards = move.from.cards.take(move.numberOfCards) ::: move.to.cards 
-    val newFromPile = Pile(move.from.pileType, fromPileCards)
-    val newToPile = Pile(move.to.pileType, toPileCards)
+    val newFromPile = Pile(fromPileCards)
+    val newToPile = Pile(toPileCards)
     KlondikeBoard(newFromPile:: newFromPile :: piles.filter(p => (p != move.from) && (p != move.to)))
   }
+  */
 }
 
-case class Pile(val pileType: Piles.Value, val cards: List[Card])
+abstract class Pile(val cards: List[Card]) 
+
+class FoundationPile(override val cards: List[Card]) extends Pile(cards)
+
+class TableauPile(override val cards: List[Card]) extends Pile(cards)
+
+class DiscardPile(override val cards: List[Card]) extends Pile(cards)
+
+class StockPile(override val cards: List[Card]) extends Pile(cards)
 
 case object KlondikeBoard
 
@@ -88,23 +101,23 @@ object KlondikeBoardGenerator {
   def shuffelCards(cards: List[Card]) =
     scala.util.Random.shuffle(cards)
     
-  def getTableauPiles(source: List[Card], nrOfPiles: Int):List[Pile] = {
+  def getTableauPiles(source: List[Card], nrOfPiles: Int):List[TableauPile] = {
     if (nrOfPiles == 0) {
       return List()
     } else {
       val cardsForPile = source.take(nrOfPiles).zipWithIndex.map(c => if(c._2 == 0) Card(c._1.suite,c._1.value,false) else c._1)
       val cardsLeft = source.drop(nrOfPiles)
-      Pile(Piles.TableauPile, cardsForPile) :: getTableauPiles(cardsLeft, nrOfPiles-1)
+      new TableauPile(cardsForPile) :: getTableauPiles(cardsLeft, nrOfPiles-1)
     }
   }
 
   def generate: KlondikeBoard = {
     val randomCards = shuffelCards(cards)
-    val foundationPiles = (1 to 4).map(i => Pile(Piles.FoundationPile, List())).toList
+    val foundationPiles = (1 to 4).map(i => new FoundationPile(List())).toList
     val tableauPiles = getTableauPiles(randomCards,7)
-    val discardPile = Pile(Piles.DiscardPile, List())
-    val stockPile = Pile(Piles.StockPile, randomCards.drop(28))
-    KlondikeBoard(List(discardPile, stockPile) ::: foundationPiles ::: tableauPiles)
+    val discardPile = new DiscardPile(List())
+    val stockPile = new StockPile(randomCards.drop(28))
+    KlondikeBoard(stockPile, discardPile, tableauPiles, foundationPiles)
   }
 
 }
