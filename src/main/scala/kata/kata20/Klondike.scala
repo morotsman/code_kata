@@ -4,7 +4,7 @@ import GameEngine.Turn
 
 case class Result()
 
-case class Move(val from: Pile, val to: Pile, numberOfCards: Int)
+case class Move(val from: Pile, val to: Pile, val numberOfCards: Int)
 
 case class Card(val suite: Suite.Value, val value: Int, val hidden: Boolean)
 
