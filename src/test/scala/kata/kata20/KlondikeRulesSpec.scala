@@ -7,7 +7,7 @@ class KlondikeRulesSpec extends FlatSpec with Matchers {
   def cards(numberOfCards: Int): List[Card] =
     if (numberOfCards == 0) List()
     else Card(Suite.Clubs, 2, true) :: cards(numberOfCards - 1)
-
+  
   /**
    * If the Stock becomes empty, turn the entire discard pile over and make it the new Stock.
    */

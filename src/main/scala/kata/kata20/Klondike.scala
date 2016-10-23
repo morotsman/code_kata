@@ -28,7 +28,7 @@ case class Game(val board: Board) {
 case class KlondikeBoard(val stockPile: StockPile, discardPile: DiscardPile, tableauPiles : List[TableauPile], foundationPiles: List[FoundationPile]) extends Board {
   
 
-  private def stockIsEmpty: List[Move] =
+  private def fillStockIfEmpty: List[Move] =
     if (stockPile.cards.length == 0 && discardPile.cards.length > 0) {
       List(Move(discardPile, stockPile, discardPile.cards.length))
     } else {
@@ -65,13 +65,13 @@ case class KlondikeBoard(val stockPile: StockPile, discardPile: DiscardPile, tab
   }
 
   def legalMoves(): List[Move] = 
-    stockIsEmpty ::: takeCardFromStock ::: moveToFoundationPile
+    fillStockIfEmpty ::: takeCardFromStock ::: moveToFoundationPile
   
   def makeMove(move: Move): Board = ???
 
 }
 
-abstract class Pile() {
+sealed trait Pile {
   def cards: List[Card]
 }
 
