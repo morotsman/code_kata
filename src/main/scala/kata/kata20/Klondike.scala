@@ -48,15 +48,7 @@ case class KlondikeBoard(val stockPile: StockPile, discardPile: DiscardPile, tab
     stockIsEmpty ::: takeCardFromStock
   
   def makeMove(move: Move): Board = ???
-  /*
-  {
-    val fromPileCards = move.from.cards.drop(move.numberOfCards)
-    val toPileCards = move.from.cards.take(move.numberOfCards) ::: move.to.cards 
-    val newFromPile = Pile(fromPileCards)
-    val newToPile = Pile(toPileCards)
-    KlondikeBoard(newFromPile:: newFromPile :: piles.filter(p => (p != move.from) && (p != move.to)))
-  }
-  */
+
 }
 
 abstract class Pile(val cards: List[Card]) 
