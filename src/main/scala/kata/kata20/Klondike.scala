@@ -43,9 +43,29 @@ case class KlondikeBoard(val stockPile: StockPile, discardPile: DiscardPile, tab
       List()
     }
     
+  private def moveToFoundationPile: List[Move] = {
+    
+    def suiteMatches(foundationTopCard: Option[Card], card: Card): Boolean = 
+      foundationTopCard.map(_.suite == card.suite).getOrElse(true)
+      
+    def isNextCard(foundationTopCard: Option[Card], card: Card): Boolean = 
+      foundationTopCard.map(_.value).getOrElse(0) == card.value - 1
+    
+    def go(piles: List[(FoundationPile, Option[Card])]): List[Move] = piles match {
+      case Nil => List()  
+      case (p, topCard)::ps => {
+        val moves = for(
+          pile <- (discardPile::tableauPiles)
+          if (pile.cards.length > 0 && !pile.cards.head.hidden && suiteMatches(topCard, pile.cards.head) && isNextCard(topCard, pile.cards.head))
+        ) yield Move(pile,p,1)
+        moves ::: go(ps)
+      }
+    } 
+    go(foundationPiles.map(p => (p,p.cards.headOption)))
+  }
 
   def legalMoves(): List[Move] = 
-    stockIsEmpty ::: takeCardFromStock
+    stockIsEmpty ::: takeCardFromStock ::: moveToFoundationPile
   
   def makeMove(move: Move): Board = ???
 
@@ -88,7 +108,7 @@ object KlondikeBoardGenerator {
   val cards = generateSuite(Suite.Clubs) ::: generateSuite(Suite.Diamonds) ::: generateSuite(Suite.Hearts) ::: generateSuite(Suite.Spades)
 
   def generateSuite(suite: Suite.Value): List[Card] =
-    (2 to 14).toList.map(v => Card(suite, v, true))
+    (1 to 13).toList.map(v => Card(suite, v, true))
 
   def shuffelCards(cards: List[Card]) =
     scala.util.Random.shuffle(cards)
