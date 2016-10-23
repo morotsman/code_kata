@@ -6,7 +6,14 @@ case class Result()
 
 case class Move(val from: Pile, val to: Pile, val numberOfCards: Int)
 
-case class Card(val suite: Suite.Value, val value: Int, val hidden: Boolean)
+case class Card(val suite: Suite.Value, val value: Int, val hidden: Boolean) {
+  
+  def isBlack: Boolean = suite == Suite.Clubs || suite == Suite.Spades 
+  
+  def oppositeColor(that: Card): Boolean = 
+    (this.isBlack && !that.isBlack) || (!this.isBlack && that.isBlack)
+  
+}
 
 object Suite extends Enumeration {
   val Hearts, Spades, Diamonds, Clubs = Value
@@ -53,19 +60,50 @@ case class KlondikeBoard(val stockPile: StockPile, discardPile: DiscardPile, tab
     
     def go(piles: List[(FoundationPile, Option[Card])]): List[Move] = piles match {
       case Nil => List()  
-      case (p, topCard)::ps => {
+      case (fp, topCard)::ps => {
         val moves = for(
           pile <- (discardPile::tableauPiles)
-          if (pile.cards.length > 0 && !pile.cards.head.hidden && suiteMatches(topCard, pile.cards.head) && isNextCard(topCard, pile.cards.head))
-        ) yield Move(pile,p,1)
+          if pile.cards.length > 0 && suiteMatches(topCard, pile.cards.head) && isNextCard(topCard, pile.cards.head)
+        ) yield Move(pile,fp,1)
         moves ::: go(ps)
       }
     } 
     go(foundationPiles.map(p => (p,p.cards.headOption)))
   }
+  
+  /**
+   Move the top card of the discard pile to one of the tableau piles. 
+   This card must be one less in rank and opposite in color to the card at the top of the destination tableau.
+   */
+  
+  def moveToTableauPile: List[Move] = {
+      
+    def oppositeColor(card1: Card, card2: Card): Boolean =
+      card1.oppositeColor(card2)
+   
+      
+       
+    def isPrevCard(card1: Card, card2: Card): Boolean = 
+      card1.value + 1 == card2.value
+   
+      
+    
+    def go(tableauPiles: List[TableauPile]): List[Move] = tableauPiles match {
+      case Nil => List()
+      case tp::ps => {
+        val moves = for(
+          pile <- (discardPile::foundationPiles) 
+          if pile.cards.length > 0 && tp.cards.length > 0 && oppositeColor(pile.cards.head, tp.cards.head) && isPrevCard(pile.cards.head, tp.cards.head)
+        ) yield Move(pile,tp,1)
+        moves ::: go(ps)
+      }
+    }
+    
+    go(tableauPiles) 
+  }
 
   def legalMoves(): List[Move] = 
-    fillStockIfEmpty ::: takeCardFromStock ::: moveToFoundationPile
+    fillStockIfEmpty ::: takeCardFromStock ::: moveToFoundationPile ::: moveToTableauPile
   
   def makeMove(move: Move): Board = ???
 
@@ -77,11 +115,27 @@ sealed trait Pile {
 
 case class FoundationPile(override val cards: List[Card]) extends Pile()
 
+object FoundationPile {
+  def apply(cards: Card*): FoundationPile = FoundationPile(cards.toList)
+}
+
 case class TableauPile(override val cards: List[Card]) extends Pile()
+
+object TableauPile {
+  def apply(cards: Card*): TableauPile = TableauPile(cards.toList)
+}
 
 case class DiscardPile(override val cards: List[Card]) extends Pile()
 
+object DiscardPile {
+  def apply(cards: Card*): DiscardPile = DiscardPile(cards.toList)
+}
+
 case class StockPile(override val cards: List[Card]) extends Pile()
+
+object StockPile {
+  def apply(cards: Card*): StockPile = StockPile(cards.toList)
+}
 
 case object KlondikeBoard
 
