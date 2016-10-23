@@ -71,15 +71,17 @@ case class KlondikeBoard(val stockPile: StockPile, discardPile: DiscardPile, tab
 
 }
 
-abstract class Pile(val cards: List[Card]) 
+abstract class Pile() {
+  def cards: List[Card]
+}
 
-class FoundationPile(override val cards: List[Card]) extends Pile(cards)
+case class FoundationPile(override val cards: List[Card]) extends Pile()
 
-class TableauPile(override val cards: List[Card]) extends Pile(cards)
+case class TableauPile(override val cards: List[Card]) extends Pile()
 
-class DiscardPile(override val cards: List[Card]) extends Pile(cards)
+case class DiscardPile(override val cards: List[Card]) extends Pile()
 
-class StockPile(override val cards: List[Card]) extends Pile(cards)
+case class StockPile(override val cards: List[Card]) extends Pile()
 
 case object KlondikeBoard
 
