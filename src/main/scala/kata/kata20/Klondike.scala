@@ -80,7 +80,7 @@ case class KlondikeBoard(val stockPile: StockPile, discardPile: DiscardPile, tab
 
   def moveToTableauPile: List[Move] = {
 
-    def go(tableauPiles: List[TableauPile]): List[Move] = tableauPiles match {
+    def go(piles: List[TableauPile]): List[Move] = piles match {
       case Nil => List()
       case targetPile :: ps => {
         val moves = for (
@@ -103,12 +103,14 @@ case class KlondikeBoard(val stockPile: StockPile, discardPile: DiscardPile, tab
    */
   def moveCardFromOneTableauToAnother: List[Move] = {
 
-    def go(tableauPiles: List[TableauPile]): List[Move] = tableauPiles match {
+    def go(piles: List[TableauPile]): List[Move] = piles match {
       case Nil => List()
       case targetPile :: ps => {
         val moves = for (
-          sourcePile <- tableauPiles if targetPile != sourcePile && sourcePile.cards.length > 0 && targetPile.cards.length > 0;
-          (card: Card, index) <- sourcePile.cards.zipWithIndex if !card.hidden && card.oppositeColor(targetPile.cards.head) && card.isPrevCard(targetPile.cards.head)
+          sourcePile <- tableauPiles 
+          if targetPile != sourcePile && sourcePile.cards.length > 0 && targetPile.cards.length > 0;
+          (card: Card, index) <- sourcePile.cards.zipWithIndex 
+          if !card.hidden && card.oppositeColor(targetPile.cards.head) && card.isPrevCard(targetPile.cards.head)
         ) yield Move(sourcePile, targetPile, index + 1)
         moves ::: go(ps)
       }
@@ -117,7 +119,36 @@ case class KlondikeBoard(val stockPile: StockPile, discardPile: DiscardPile, tab
     go(tableauPiles)
   }
 
-  def moveKingToEmptyTableau: List[Move] = List()
+  /**
+   * If a move leaves a tableau pile empty, an exposed King at the top of a tableau or discard pile, 
+   * or a sequence starting with a King on a tableau pile, may be moved to it.
+   */
+  def moveKingToEmptyTableau: List[Move] = {
+    
+    def go(piles: List[TableauPile]): List[Move] = piles match {
+      case Nil => List()
+      case targetPile :: ps => {
+        val discardAndFoundationMoves = for(
+          sourcePile <- discardPile :: foundationPiles;
+          if targetPile.cards.length == 0 && sourcePile.cards.length > 0 && sourcePile.cards.head.value == 13
+        ) yield Move(sourcePile, targetPile,1)
+        
+        val tableauMoves = for (
+          sourcePile <- tableauPiles
+          if sourcePile != targetPile && targetPile.cards.length == 0 && sourcePile.cards.length > 0; 
+          (card: Card, index) <- sourcePile.cards.zipWithIndex; 
+          if !card.hidden && card.value == 13 
+        ) yield Move(sourcePile,targetPile,index + 1)
+        
+        tableauMoves ::: discardAndFoundationMoves ::: go(ps)
+      } 
+      
+      
+    }
+    
+    go(tableauPiles)
+    
+  }
 
   def legalMoves(): List[Move] =
     fillStockIfEmpty ::: takeCardFromStock ::: moveToFoundationPile ::: moveToTableauPile ::: moveCardFromOneTableauToAnother ::: moveKingToEmptyTableau
