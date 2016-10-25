@@ -31,9 +31,12 @@ trait Board {
   def makeMove(move: Move): Board;
 }
 
-case class Game(val board: Board) {
-  def legalMoves(): List[Move] =
+case class Game(val board: KlondikeBoard) {
+  def legalMoves: List[Move] =
     board.legalMoves()
+    
+  def renderBoard: Unit = 
+    AsciiBoardRenderer.renderBoard(board)
 }
 
 case class KlondikeBoard(val stockPile: StockPile, discardPile: DiscardPile, tableauPiles: List[TableauPile], foundationPiles: List[FoundationPile]) extends Board {
@@ -194,7 +197,7 @@ object GameEngine {
 
   def takeTurn(move: Move): GameEngine = GameEngine(
     (game: Game) => {
-      val availableMoves = game.legalMoves()
+      val availableMoves = game.legalMoves
       if (availableMoves.contains(move)) {
         val updatedGame = ???
         (Result(), Some(updatedGame))
@@ -259,7 +262,10 @@ object Klondike {
   def main(args: Array[String]) {
     val game = Game(KlondikeBoardGenerator.generate)
 
-    playGame(game)
+    game.renderBoard
+    
+    
+    //playGame(game)
 
   }
 
