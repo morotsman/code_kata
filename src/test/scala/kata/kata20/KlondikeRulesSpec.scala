@@ -1,7 +1,7 @@
 package kata.kata20
 
 import org.scalatest._
-
+  
 class KlondikeRulesSpec extends FlatSpec with Matchers {
 
   def cards(numberOfCards: Int): List[Card] =
@@ -167,6 +167,67 @@ class KlondikeRulesSpec extends FlatSpec with Matchers {
     discardPile = DiscardPile(Card(Suite.Hearts, 8, false))
     board = BoardBuilder().withDiscardPile(discardPile).withTableauPile(0, tableauPile).withFoundationPiles(emptyFoundationsPiles).build
     board.legalMoves().length should be(1)    
+  }
+  
+    /**
+   * Move one or more cards from one tableau pile to another.
+   * If multiple cards are moved, they must be a sequence ascending in rank and alternating in color.
+   * The card moved (or the top of the sequence moved) must be one less in rank and opposite in color to the card at the top of the destination tableau.
+   * If the move leaves a face-down card to the top of the original pile, turn it over.
+   */
+  "If tableau has a card it" should "be possible to move cards to it from another tableau if it is in the opposite color and one less in rank" in {
+    val hidden = true
+    val notHidden = false
+    
+    var stockPile = StockPile(cards(0))
+    var discardPile = DiscardPile(cards(0))
+    var board = BoardBuilder().withDiscardPile(discardPile).withTableauPiles(emptyTableauPiles).withFoundationPiles(emptyFoundationsPiles).build
+    board.legalMoves().length should be(0)
+    
+    var tableauPile1 = TableauPile(Card(Suite.Hearts, 9, notHidden), Card(Suite.Spades, 10, hidden))
+    var tableauPile2 = TableauPile(Card(Suite.Spades, 8, hidden))
+    board = BoardBuilder().withDiscardPile(discardPile).withTableauPile(2, tableauPile1).withTableauPile(3, tableauPile2).withFoundationPiles(emptyFoundationsPiles).build
+    board.legalMoves().length should be(0) 
+    
+    tableauPile1 = TableauPile(Card(Suite.Hearts, 9, notHidden), Card(Suite.Spades, 10, hidden))
+    tableauPile2 = TableauPile(Card(Suite.Diamonds, 8, hidden))
+    board = BoardBuilder().withDiscardPile(discardPile).withTableauPile(2, tableauPile1).withTableauPile(3, tableauPile2).withFoundationPiles(emptyFoundationsPiles).build
+    board.legalMoves().length should be(0)           
+    
+    tableauPile1 = TableauPile(Card(Suite.Hearts, 9, notHidden), Card(Suite.Spades, 10, hidden))
+    tableauPile2 = TableauPile(Card(Suite.Spades, 8, notHidden))
+    board = BoardBuilder().withDiscardPile(discardPile).withTableauPile(2, tableauPile1).withTableauPile(3, tableauPile2).withFoundationPiles(emptyFoundationsPiles).build
+    println(board.legalMoves())
+    board.legalMoves().length should be(1) 
+    
+    tableauPile1 = TableauPile(Card(Suite.Hearts, 9, notHidden), Card(Suite.Spades, 10, hidden))
+    tableauPile2 = TableauPile(Card(Suite.Spades, 8, notHidden))
+    board = BoardBuilder().withDiscardPile(discardPile).withTableauPile(2, tableauPile1).withTableauPile(3, tableauPile2).withFoundationPiles(emptyFoundationsPiles).build
+    board.legalMoves().length should be(1)     
+    
+    tableauPile1 = TableauPile(Card(Suite.Hearts, 9, notHidden), Card(Suite.Spades, 10, hidden))
+    tableauPile2 = TableauPile(Card(Suite.Hearts, 7, notHidden),Card(Suite.Spades, 8, notHidden))
+    board = BoardBuilder().withDiscardPile(discardPile).withTableauPile(2, tableauPile1).withTableauPile(3, tableauPile2).withFoundationPiles(emptyFoundationsPiles).build
+    println(board.legalMoves())
+    board.legalMoves().length should be(1)  
+    
+    tableauPile1 = TableauPile(Card(Suite.Hearts, 9, notHidden), Card(Suite.Spades, 10, hidden))
+    tableauPile2 = TableauPile(Card(Suite.Hearts, 7, notHidden),Card(Suite.Spades, 8, hidden))
+    board = BoardBuilder().withDiscardPile(discardPile).withTableauPile(2, tableauPile1).withTableauPile(3, tableauPile2).withFoundationPiles(emptyFoundationsPiles).build
+    println(board.legalMoves())
+    board.legalMoves().length should be(0)     
+    
+    tableauPile1 = TableauPile(Card(Suite.Hearts, 9, notHidden), Card(Suite.Spades, 10, hidden))
+    tableauPile2 = TableauPile(Card(Suite.Spades, 8, notHidden))
+    var tableauPile3 = TableauPile(Card(Suite.Clubs, 8, notHidden))
+    board = BoardBuilder().withDiscardPile(discardPile).withTableauPile(2, tableauPile1).withTableauPile(3, tableauPile2).withTableauPile(4, tableauPile3).withFoundationPiles(emptyFoundationsPiles).build
+    println(board.legalMoves())
+    board.legalMoves().length should be(2)    
+    
+    tableauPile1 = TableauPile(Card(Suite.Hearts, 9, notHidden), Card(Suite.Spades, 10, notHidden))
+    tableauPile2 = TableauPile(Card(Suite.Hearts, 9, notHidden))
+    board = BoardBuilder().withDiscardPile(discardPile).withTableauPile(2, tableauPile1).withTableauPile(3, tableauPile2).withFoundationPiles(emptyFoundationsPiles).build
+    board.legalMoves().length should be(0)   
     
     
   }

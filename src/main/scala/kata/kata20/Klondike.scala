@@ -7,22 +7,27 @@ case class Result()
 case class Move(val from: Pile, val to: Pile, val numberOfCards: Int)
 
 case class Card(val suite: Suite.Value, val value: Int, val hidden: Boolean) {
-  
-  def isBlack: Boolean = suite == Suite.Clubs || suite == Suite.Spades 
-  
-  def oppositeColor(that: Card): Boolean = 
-    (this.isBlack && !that.isBlack) || (!this.isBlack && that.isBlack)
-  
+
+  def isBlack: Boolean = suite == Suite.Clubs || suite == Suite.Spades
+
+  def oppositeColor(that: Card): Boolean =
+    (isBlack && !that.isBlack) || (!isBlack && that.isBlack)
+
+  def isPrevCard(card: Card): Boolean =
+    value + 1 == card.value
+    
+  def isNextCard(card: Card): Boolean =
+    value - 1 == card.value    
+
 }
 
 object Suite extends Enumeration {
   val Hearts, Spades, Diamonds, Clubs = Value
 }
 
-
 trait Board {
   def legalMoves(): List[Move];
-  
+
   def makeMove(move: Move): Board;
 }
 
@@ -31,9 +36,7 @@ case class Game(val board: Board) {
     board.legalMoves()
 }
 
-
-case class KlondikeBoard(val stockPile: StockPile, discardPile: DiscardPile, tableauPiles : List[TableauPile], foundationPiles: List[FoundationPile]) extends Board {
-  
+case class KlondikeBoard(val stockPile: StockPile, discardPile: DiscardPile, tableauPiles: List[TableauPile], foundationPiles: List[FoundationPile]) extends Board {
 
   private def fillStockIfEmpty: List[Move] =
     if (stockPile.cards.length == 0 && discardPile.cards.length > 0) {
@@ -41,70 +44,84 @@ case class KlondikeBoard(val stockPile: StockPile, discardPile: DiscardPile, tab
     } else {
       List()
     }
- 
-  
-  private def takeCardFromStock: List[Move] = 
-    if(stockPile.cards.length> 0) {
+
+  private def takeCardFromStock: List[Move] =
+    if (stockPile.cards.length > 0) {
       List(Move(stockPile, discardPile, 1))
     } else {
       List()
     }
-    
+
   private def moveToFoundationPile: List[Move] = {
-    
-    def suiteMatches(foundationTopCard: Option[Card], card: Card): Boolean = 
+
+    def suiteMatches(foundationTopCard: Option[Card], card: Card): Boolean =
       foundationTopCard.map(_.suite == card.suite).getOrElse(true)
-      
-    def isNextCard(foundationTopCard: Option[Card], card: Card): Boolean = 
+
+    def isNextCard(foundationTopCard: Option[Card], card: Card): Boolean =
       foundationTopCard.map(_.value).getOrElse(0) == card.value - 1
-    
-    def go(piles: List[(FoundationPile, Option[Card])]): List[Move] = piles match {
-      case Nil => List()  
-      case (fp, topCard)::ps => {
-        val moves = for(
-          pile <- (discardPile::tableauPiles)
-          if pile.cards.length > 0 && suiteMatches(topCard, pile.cards.head) && isNextCard(topCard, pile.cards.head)
-        ) yield Move(pile,fp,1)
-        moves ::: go(ps)
-      }
-    } 
-    go(foundationPiles.map(p => (p,p.cards.headOption)))
-  }
-  
-  /**
-   Move the top card of the discard pile to one of the tableau piles. 
-   This card must be one less in rank and opposite in color to the card at the top of the destination tableau.
-   */
-  
-  def moveToTableauPile: List[Move] = {
-      
-    def oppositeColor(card1: Card, card2: Card): Boolean =
-      card1.oppositeColor(card2)
-   
-      
-       
-    def isPrevCard(card1: Card, card2: Card): Boolean = 
-      card1.value + 1 == card2.value
-   
-      
-    
-    def go(tableauPiles: List[TableauPile]): List[Move] = tableauPiles match {
+
+    def go(piles: List[(FoundationPile)]): List[Move] = piles match {
       case Nil => List()
-      case tp::ps => {
-        val moves = for(
-          pile <- (discardPile::foundationPiles) 
-          if pile.cards.length > 0 && tp.cards.length > 0 && oppositeColor(pile.cards.head, tp.cards.head) && isPrevCard(pile.cards.head, tp.cards.head)
-        ) yield Move(pile,tp,1)
+      case (targetPile) :: ps => {
+        val moves = for (
+          sourcePile <- (discardPile :: tableauPiles);
+          if sourcePile.cards.length > 0 && suiteMatches(targetPile.cards.headOption, sourcePile.cards.head) && isNextCard(targetPile.cards.headOption, sourcePile.cards.head)
+        ) yield Move(sourcePile, targetPile, 1)
         moves ::: go(ps)
       }
     }
-    
-    go(tableauPiles) 
+    go(foundationPiles)
   }
 
-  def legalMoves(): List[Move] = 
-    fillStockIfEmpty ::: takeCardFromStock ::: moveToFoundationPile ::: moveToTableauPile
-  
+  /**
+   * Move the top card of the discard pile to one of the tableau piles.
+   * This card must be one less in rank and opposite in color to the card at the top of the destination tableau.
+   */
+
+  def moveToTableauPile: List[Move] = {
+
+    def go(tableauPiles: List[TableauPile]): List[Move] = tableauPiles match {
+      case Nil => List()
+      case targetPile :: ps => {
+        val moves = for (
+          sourcePile <- (discardPile :: foundationPiles);
+          if sourcePile.cards.length > 0 && targetPile.cards.length > 0
+            && sourcePile.cards.head.oppositeColor(targetPile.cards.head) && sourcePile.cards.head.isPrevCard(targetPile.cards.head)
+        ) yield Move(sourcePile, targetPile, 1)
+        moves ::: go(ps)
+      }
+    }
+
+    go(tableauPiles)
+  }
+
+  /**
+   * Move one or more cards from one tableau pile to another.
+   * If multiple cards are moved, they must be a sequence ascending in rank and alternating in color.
+   * The card moved (or the top of the sequence moved) must be one less in rank and opposite in color to the card at the top of the destination tableau.
+   * If the move leaves a face-down card to the top of the original pile, turn it over.
+   */
+  def moveCardFromOneTableauToAnother: List[Move] = {
+
+    def go(tableauPiles: List[TableauPile]): List[Move] = tableauPiles match {
+      case Nil => List()
+      case targetPile :: ps => {
+        val moves = for (
+          sourcePile <- tableauPiles if targetPile != sourcePile && sourcePile.cards.length > 0 && targetPile.cards.length > 0;
+          (card: Card, index) <- sourcePile.cards.zipWithIndex if !card.hidden && card.oppositeColor(targetPile.cards.head) && card.isPrevCard(targetPile.cards.head)
+        ) yield Move(sourcePile, targetPile, index + 1)
+        moves ::: go(ps)
+      }
+    }
+
+    go(tableauPiles)
+  }
+
+  def moveKingToEmptyTableau: List[Move] = List()
+
+  def legalMoves(): List[Move] =
+    fillStockIfEmpty ::: takeCardFromStock ::: moveToFoundationPile ::: moveToTableauPile ::: moveCardFromOneTableauToAnother ::: moveKingToEmptyTableau
+
   def makeMove(move: Move): Board = ???
 
 }
@@ -139,7 +156,6 @@ object StockPile {
 
 case object KlondikeBoard
 
-
 case class GameEngine(val run: Turn)
 
 object GameEngine {
@@ -168,21 +184,21 @@ object KlondikeBoardGenerator {
 
   def shuffelCards(cards: List[Card]) =
     scala.util.Random.shuffle(cards)
-    
-  def getTableauPiles(source: List[Card], nrOfPiles: Int):List[TableauPile] = {
+
+  def getTableauPiles(source: List[Card], nrOfPiles: Int): List[TableauPile] = {
     if (nrOfPiles == 0) {
       return List()
     } else {
-      val cardsForPile = source.take(nrOfPiles).zipWithIndex.map(c => if(c._2 == 0) Card(c._1.suite,c._1.value,false) else c._1)
+      val cardsForPile = source.take(nrOfPiles).zipWithIndex.map(c => if (c._2 == 0) Card(c._1.suite, c._1.value, false) else c._1)
       val cardsLeft = source.drop(nrOfPiles)
-      new TableauPile(cardsForPile) :: getTableauPiles(cardsLeft, nrOfPiles-1)
+      new TableauPile(cardsForPile) :: getTableauPiles(cardsLeft, nrOfPiles - 1)
     }
   }
 
   def generate: KlondikeBoard = {
     val randomCards = shuffelCards(cards)
     val foundationPiles = (1 to 4).map(i => new FoundationPile(List())).toList
-    val tableauPiles = getTableauPiles(randomCards,7)
+    val tableauPiles = getTableauPiles(randomCards, 7)
     val discardPile = new DiscardPile(List())
     val stockPile = new StockPile(randomCards.drop(28))
     KlondikeBoard(stockPile, discardPile, tableauPiles, foundationPiles)
