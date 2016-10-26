@@ -240,15 +240,24 @@ object KlondikeBoardGenerator {
 
 }
 
+
+
 object Klondike {
+  
+  def stringToMove(b: KlondikeBoard, moveAsString: String): Move = {
+    moveAsString.split(" ").toList match {
+      case from :: to :: number if from == "s" && to == "d" => Move(b.stockPile,b.discardPile,1) 
+    }
+  }
 
   def playGame(game: Game): Unit = {
-    println(game.board)
+    game.renderBoard
 
     //get move from user
-    val moveFromUser = ???
+    val moveFromUser = scala.io.StdIn.readLine("Make move>")
+    println(moveFromUser)
 
-    val (result, newGame) = GameEngine.takeTurn(moveFromUser).run(game)
+    val (result, newGame) = GameEngine.takeTurn(stringToMove(game.board, moveFromUser)).run(game)
 
     if (newGame == None) {
       println("Wrong move")
@@ -262,10 +271,10 @@ object Klondike {
   def main(args: Array[String]) {
     val game = Game(KlondikeBoardGenerator.generate)
 
-    game.renderBoard
     
     
-    //playGame(game)
+    
+    playGame(game)
 
   }
 
