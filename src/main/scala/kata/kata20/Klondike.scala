@@ -156,7 +156,7 @@ case class KlondikeBoard(val stockPile: StockPile, discardPile: DiscardPile, tab
   def legalMoves(): List[Move] =
     fillStockIfEmpty ::: takeCardFromStock ::: moveToFoundationPile ::: moveToTableauPile ::: moveCardFromOneTableauToAnother ::: moveKingToEmptyTableau
 
-  def makeMove(move: Move): Board = ???
+  def makeMove(move: Move): KlondikeBoard = ???
 
 }
 
@@ -199,8 +199,8 @@ object GameEngine {
     (game: Game) => {
       val availableMoves = game.legalMoves
       if (availableMoves.contains(move)) {
-        val updatedGame = ???
-        (Result(), Some(updatedGame))
+        val updatedBoard = game.board.makeMove(move)
+        (Result(), Some(Game(updatedBoard)))
       } else {
         (Result(), None)
       }
