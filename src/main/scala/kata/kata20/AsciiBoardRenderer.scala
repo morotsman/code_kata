@@ -75,20 +75,20 @@ object AsciiBoardRenderer {
     renderTop.foreach(println)
 
     if (board.discardPile.cards.length > 0) {
-      print(renderPile(board.discardPile))
+      print(renderPile(board.discardPile).head + "   ")
     } else {
       print("    ")
     }
 
     if (board.stockPile.cards.length > 0) {
-      print(renderPile(board.stockPile).head)
+      print(renderPile(board.stockPile).head + "    ")
     } else {
       print("    ")
     }
 
     board.foundationPiles.foreach { p =>
       if (p.cards.length > 0) {
-        print(renderPile(p).head)
+        print(renderPile(p).head + "    ")
       } else {
         print("    ")
       }
