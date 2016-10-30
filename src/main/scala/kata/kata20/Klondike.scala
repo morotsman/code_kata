@@ -354,14 +354,12 @@ object Klondike {
     val moveFromUser = scala.io.StdIn.readLine("Make move>")
     println(moveFromUser)
     val move = stringToMove(game.board, moveFromUser)
-    println(move)
     
     val newGame = move.flatMap(m => GameEngine.takeTurn(m).run(game)._2)
     
 
     if (newGame == None) {
       println("Wrong move")
-      println(move)
       playGame(game)
     } else {
       playGame(newGame.get)
