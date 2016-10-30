@@ -268,16 +268,22 @@ object KlondikeBoardGenerator {
 
 object Klondike {
 
-  def stringToMove(b: KlondikeBoard, moveAsString: String): Move = {
+  def stringToMove(b: KlondikeBoard, moveAsString: String): Option[Move] = {
     
     def tableauPile(nr: Int): TableauPile = 
       b.tableauPiles.drop(nr-1).head
     
     
     moveAsString.split(" ").toList match {
-      case from :: to :: number if from == "s" && to == "d" => Move(b.stockPile, b.discardPile, 1)
-      case from :: to :: number if from == "d" && to == "s" => Move(b.discardPile, b.stockPile, b.discardPile.cards.length)
-      case from :: to :: number if from == "d" && to.startsWith("t") => Move(b.discardPile, tableauPile(to.drop(1).toInt), 1)
+      case from :: to :: number if from == "s" && to == "d" => Some(Move(b.stockPile, b.discardPile, 1))
+      case from :: to :: number if from == "d" && to == "s" => Some(Move(b.discardPile, b.stockPile, b.discardPile.cards.length))
+      case from :: to :: number if from == "d" && to.startsWith("t") => 
+        if(to.drop(1) != "" && to.drop(1).forall(Character.isDigit)){
+           Some(Move(b.discardPile, tableauPile(to.drop(1).toInt), 1)) 
+        } else {
+          None
+        }
+      case _ => None
     }
   }
   
@@ -300,11 +306,12 @@ object Klondike {
     val moveFromUser = scala.io.StdIn.readLine("Make move>")
     println(moveFromUser)
     val move = stringToMove(game.board, moveFromUser)
-    val (result, newGame) = GameEngine.takeTurn(move).run(game)
+    
+    val newGame = move.flatMap(m => GameEngine.takeTurn(m).run(game)._2)
+    
 
     if (newGame == None) {
       println("Wrong move")
-      println(move)
       playGame(game)
     } else {
       playGame(newGame.get)
