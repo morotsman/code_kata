@@ -19,9 +19,26 @@ object AsciiBoardRenderer {
   private def renderPile(pile: Pile): List[String] =
     pile.cards.map(renderCard)
 
-  def renderTableauRow(cards: Card*): String =
-    cards.map(renderCard).mkString("       ")
+  def renderTableauRow(cards: List[Option[Card]]): String =
+    cards.map(c => c.map(renderCard).getOrElse("")).mkString("       ")
 
+  private def renderTableau(piles: List[TableauPile]): List[String] = {
+    if (piles.map(p => p.cards.length).exists(_ > 0)) {
+      val cards = for (
+        pile <- piles;
+        card = pile.cards.headOption
+      ) yield card
+
+      val newTableaus = for (
+        pile <- piles
+      ) yield (TableauPile(pile.cards.drop(1)))
+
+      renderTableauRow(cards) :: renderTableau(newTableaus)
+
+    } else Nil
+
+  }
+  /*
   private def renderTableau(piles: List[TableauPile]): List[String] = piles match {
     case Nil => Nil
     case List(TableauPile(a :: as), TableauPile(b :: bs), TableauPile(c :: cs), TableauPile(d :: ds), TableauPile(e :: es), TableauPile(f :: fs), TableauPile(g :: gs)) =>
@@ -47,6 +64,7 @@ object AsciiBoardRenderer {
         renderTableau(List())
 
   }
+  */
 
   def renderTop(): List[String] =
     List(
