@@ -20,7 +20,7 @@ object AsciiBoardRenderer {
     pile.cards.map(renderCard)
 
   def renderTableauRow(cards: List[Option[Card]]): String =
-    cards.map(c => c.map(renderCard).getOrElse("")).mkString("       ")
+    cards.map(c => c.map(renderCard).getOrElse("   ")).mkString("       ")
 
   private def renderTableau(piles: List[TableauPile]): List[String] = {
     if (piles.map(p => p.cards.length).exists(_ > 0)) {

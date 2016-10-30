@@ -188,6 +188,20 @@ case class KlondikeBoard(val stockPile: StockPile, discardPile: DiscardPile, tab
         }          
         val newFoundationPile = FoundationPile(indexTo, from.take(1) ::: to)
         KlondikeBoard(stockPile, discardPile, replacePile(tableauPiles, TableauPile(indexFrom, from), newTableauPile), replacePile(foundationPiles, FoundationPile(indexTo, to), newFoundationPile))        
+      case Move(TableauPile(indexFrom, from), TableauPile(indexTo,to), number) =>
+        val newFrom = if(from.length >= number + 1) {
+          val newHead = from.drop(number).head
+          val tableauCards = Card(newHead.suite,newHead.value,false):: from.drop(number+1)
+          TableauPile(indexFrom, tableauCards)
+        } else {
+          TableauPile(indexFrom)
+        }
+        val newTo = TableauPile(indexTo, from.take(number):::to)
+        
+        val piles = replacePile(tableauPiles, TableauPile(indexFrom, from), newFrom)
+        val piles2 = replacePile(piles, TableauPile(indexTo, to), newTo)
+          
+        KlondikeBoard(stockPile,discardPile,piles2,foundationPiles)
       case _ => ???
     }
 
@@ -288,12 +302,16 @@ object Klondike {
     def foundationPile(nr: Int): FoundationPile = 
       b.foundationPiles.drop(nr-1).head      
     
+    def toInt(s: String): Option[Int] = 
+      if(s != "" && s.forall(Character.isDigit)){ 
+        Some(s.toInt)
+      }else {
+        None
+      }
+    
+      
     def getPileIndex(pile: String): Option[Int] = 
-        if(pile.drop(1) != "" && pile.drop(1).forall(Character.isDigit)){
-          Some(pile.drop(1).toInt)
-        } else {
-          None
-        }     
+        toInt(pile.drop(1))     
     
     
     moveAsString.split(" ").toList match {
@@ -308,18 +326,24 @@ object Klondike {
           fromIndex <- getPileIndex(from);
           toIndex <- getPileIndex(to)
         ) yield(Move(tableauPile(fromIndex), foundationPile(toIndex),1))
+      case from :: to :: number if from.startsWith("t") && to.startsWith("t") =>
+        for(
+          fromIndex <- getPileIndex(from);
+          toIndex <- getPileIndex(to);
+          numberOfCards <- toInt(number.mkString)
+        ) yield(Move(tableauPile(fromIndex), tableauPile(toIndex),numberOfCards))        
       case _ => None
     }
   }
 
   def moveToString(b: KlondikeBoard, move: Move): String = move match {
-    case Move(DiscardPile(_), StockPile(_), number)      => "DiscardPile" + " => " + "StockPile" + ": " + number
-    case Move(DiscardPile(_), FoundationPile(index,_), number) => "DiscardPile" + " => " + "FoundationPile" + index +  ": " + number
-    case Move(DiscardPile(_), TableauPile(index, _), number)    => "DiscardPile" + " => " + "TableauPile" + index + ": " + number
-    case Move(StockPile(_), DiscardPile(_), number)      => "StockPile" + " => " + "DiscardPile" + ": " + number
-    case Move(TableauPile(indexFrom, _), TableauPile(indexTo, _), number)    => "TableauPile" + indexFrom +  " => " + "TableauPile" + indexTo + ": " + number
-    case Move(TableauPile(indexFrom, _), FoundationPile(indexTo,_), number) => "TableauPile" + indexFrom + " => " + "FoundationPile" + indexTo + ": " + number
-    case Move(FoundationPile(indexFrom,_), TableauPile(indexTo, _), number) => "FoundationPile" + indexFrom + " => " + "TableauPile" + indexTo + ": " + number
+    case Move(DiscardPile(_), StockPile(_), number)      => "d" + " => " + "s" + ": " + number
+    case Move(DiscardPile(_), FoundationPile(index,_), number) => "d" + " => " + "f" + index +  ": " + number
+    case Move(DiscardPile(_), TableauPile(index, _), number)    => "d" + " => " + "t" + index + ": " + number
+    case Move(StockPile(_), DiscardPile(_), number)      => "s" + " => " + "d" + ": " + number
+    case Move(TableauPile(indexFrom, _), TableauPile(indexTo, _), number)    => "t" + indexFrom +  " => " + "t" + indexTo + ": " + number
+    case Move(TableauPile(indexFrom, _), FoundationPile(indexTo,_), number) => "t" + indexFrom + " => " + "f" + indexTo + ": " + number
+    case Move(FoundationPile(indexFrom,_), TableauPile(indexTo, _), number) => "f" + indexFrom + " => " + "t" + indexTo + ": " + number
   }
 
   def playGame(game: Game): Unit = {
@@ -330,12 +354,14 @@ object Klondike {
     val moveFromUser = scala.io.StdIn.readLine("Make move>")
     println(moveFromUser)
     val move = stringToMove(game.board, moveFromUser)
+    println(move)
     
     val newGame = move.flatMap(m => GameEngine.takeTurn(m).run(game)._2)
     
 
     if (newGame == None) {
       println("Wrong move")
+      println(move)
       playGame(game)
     } else {
       playGame(newGame.get)

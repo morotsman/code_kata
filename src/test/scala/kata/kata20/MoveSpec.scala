@@ -175,4 +175,41 @@ class MoveSpec extends FlatSpec with Matchers {
 
   }  
 
+"A Move from a tableauPile to a tableauPile" should "add one or more cards to the tableauPile" in {
+    val hidden = true
+    val notHidden = false
+      
+
+    var tableauPile1 = TableauPile(1, Card(Suite.Spades,7,notHidden)) 
+    var tableauPile2 = TableauPile(2, Card(Suite.Hearts,8,notHidden)) 
+    var board = BoardBuilder().withTableauPile(0,tableauPile1).withTableauPile(1,tableauPile2).build
+    var result = board.makeMove(Move(tableauPile1,tableauPile2,1))
+    result.tableauPiles.head should be(TableauPile(1)) 
+    result.tableauPiles.drop(1).head should be(TableauPile(2,Card(Suite.Spades,7,notHidden),Card(Suite.Hearts,8,notHidden))) 
+    
+    tableauPile1 = TableauPile(1, Card(Suite.Spades,7,notHidden),Card(Suite.Spades,3,hidden)) 
+    tableauPile2 = TableauPile(2, Card(Suite.Hearts,8,notHidden)) 
+    board = BoardBuilder().withTableauPile(0,tableauPile1).withTableauPile(1,tableauPile2).build
+    result = board.makeMove(Move(tableauPile1,tableauPile2,1))
+    result.tableauPiles.head should be(TableauPile(1,Card(Suite.Spades,3,notHidden))) 
+    result.tableauPiles.drop(1).head should be(TableauPile(2,Card(Suite.Spades,7,notHidden),Card(Suite.Hearts,8,notHidden))) 
+    
+    
+    tableauPile1 = TableauPile(1, Card(Suite.Spades,7,notHidden),Card(Suite.Spades,3,hidden),Card(Suite.Spades,9,hidden)) 
+    tableauPile2 = TableauPile(2, Card(Suite.Hearts,8,notHidden)) 
+    board = BoardBuilder().withTableauPile(0,tableauPile1).withTableauPile(1,tableauPile2).build
+    result = board.makeMove(Move(tableauPile1,tableauPile2,1))
+    result.tableauPiles.head should be(TableauPile(1,Card(Suite.Spades,3,notHidden),Card(Suite.Spades,9,hidden))) 
+    result.tableauPiles.drop(1).head should be(TableauPile(2,Card(Suite.Spades,7,notHidden),Card(Suite.Hearts,8,notHidden)))  
+    
+    tableauPile1 = TableauPile(1, Card(Suite.Spades,7,notHidden),Card(Suite.Hearts,8,notHidden),Card(Suite.Spades,12,hidden)) 
+    tableauPile2 = TableauPile(2, Card(Suite.Spades,9,notHidden),Card(Suite.Diamonds,2,hidden)) 
+    board = BoardBuilder().withTableauPile(0,tableauPile1).withTableauPile(1,tableauPile2).build
+    result = board.makeMove(Move(tableauPile1,tableauPile2,2))
+    result.tableauPiles.head should be(TableauPile(1,Card(Suite.Spades,12,notHidden))) 
+    result.tableauPiles.drop(1).head should be(TableauPile(2,Card(Suite.Spades,7,notHidden),Card(Suite.Hearts,8,notHidden),Card(Suite.Spades,9,notHidden),Card(Suite.Diamonds,2,hidden)))    
+    
+    
+}
+
 }
