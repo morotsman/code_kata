@@ -162,26 +162,32 @@ case class KlondikeBoard(val stockPile: StockPile, discardPile: DiscardPile, tab
     }
 
     def go(move: Move): KlondikeBoard = move match {
-      case Move(StockPile(from), DiscardPile(to), number) =>
+      case Move(StockPile(from), DiscardPile(to), _) =>
         val newStock = StockPile(from.drop(1))
-        val cards = from.take(1).map(c => Card(c.suite, c.value, false))
-        val newDiscard = DiscardPile(cards ::: to)
+        val newDiscard = DiscardPile(from.take(1).map(c => Card(c.suite, c.value, false)) ::: to)
         KlondikeBoard(newStock, newDiscard, tableauPiles, foundationPiles)
-      case Move(DiscardPile(from), StockPile(to), number) =>
-        val cards = from.map(c => Card(c.suite, c.value, true)).reverse
-        val newStock = StockPile(cards)
+      case Move(DiscardPile(from), StockPile(to), _) =>
+        val newStock = StockPile(from.map(c => Card(c.suite, c.value, true)).reverse)
         val newDiscard = DiscardPile(Nil)
         KlondikeBoard(newStock, newDiscard, tableauPiles, foundationPiles)
-      case Move(DiscardPile(from), TableauPile(index, to), number) =>
-        val cards = from.take(1)
+      case Move(DiscardPile(from), TableauPile(index, to), _) =>
         val newDiscard = DiscardPile(from.drop(1))
-        val newTableau = TableauPile(index, cards ::: to)
+        val newTableau = TableauPile(index, from.take(1) ::: to)
         KlondikeBoard(stockPile, newDiscard, replacePile(tableauPiles,TableauPile(index, to), newTableau), foundationPiles)
-      case Move(DiscardPile(from), FoundationPile(index,to), number) =>
-        val cards = from.take(1)
+      case Move(DiscardPile(from), FoundationPile(index,to), _) =>
         val newDiscard = DiscardPile(from.drop(1))
-        val newFoundationPile = FoundationPile(index, cards ::: to)
+        val newFoundationPile = FoundationPile(index, from.take(1) ::: to)
         KlondikeBoard(stockPile, newDiscard, tableauPiles, replacePile(foundationPiles, FoundationPile(index, to), newFoundationPile))
+      case Move(TableauPile(indexFrom, from), FoundationPile(indexTo,to), _) =>
+        val newTableauPile = if(from.length > 1){
+          val newHead = from.drop(1).head 
+          val tableauCards = Card(newHead.suite,newHead.value,false) ::from.drop(2) 
+          TableauPile(indexFrom, tableauCards)
+        } else {
+          TableauPile(indexFrom)
+        }          
+        val newFoundationPile = FoundationPile(indexTo, from.take(1) ::: to)
+        KlondikeBoard(stockPile, discardPile, replacePile(tableauPiles, TableauPile(indexFrom, from), newTableauPile), replacePile(foundationPiles, FoundationPile(indexTo, to), newFoundationPile))        
       case _ => ???
     }
 
@@ -190,6 +196,7 @@ case class KlondikeBoard(val stockPile: StockPile, discardPile: DiscardPile, tab
   }
 
 }
+
 
 sealed trait Pile {
   def cards: List[Card]
@@ -296,12 +303,14 @@ object Klondike {
         getPileIndex(to).map(i => Move(b.discardPile, tableauPile(i), 1))
       case from :: to :: number if from == "d" && to.startsWith("f") =>
         getPileIndex(to).map(i => Move(b.discardPile, foundationPile(i), 1))
+      case from :: to :: number if from.startsWith("t") && to.startsWith("f") =>
+        for(
+          fromIndex <- getPileIndex(from);
+          toIndex <- getPileIndex(to)
+        ) yield(Move(tableauPile(fromIndex), foundationPile(toIndex),1))
       case _ => None
     }
   }
-  
-  def indexOfPile(piles: List[Pile], pile:Pile) : Int = 
-    piles.indexOf(pile)+1
 
   def moveToString(b: KlondikeBoard, move: Move): String = move match {
     case Move(DiscardPile(_), StockPile(_), number)      => "DiscardPile" + " => " + "StockPile" + ": " + number

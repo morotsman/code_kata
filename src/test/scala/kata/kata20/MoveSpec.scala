@@ -98,7 +98,7 @@ class MoveSpec extends FlatSpec with Matchers {
     
   }  
  
-  "A Move form the discardPile to a founadtionPile" should "add a card to the foundationPile" in {
+  "A Move form the discardPile to a foundationPile" should "add a card to the foundationPile" in {
     val hidden = true
     val notHidden = false
       
@@ -107,6 +107,9 @@ class MoveSpec extends FlatSpec with Matchers {
     var board = BoardBuilder().withDiscardPile(discardPile).withFoundationPile(0,foundationPile).build
     var result = board.makeMove(Move(discardPile,foundationPile,1))
     result.foundationPiles.head should be(FoundationPile(1,Card(Suite.Clubs,1,notHidden)))
+    result.foundationPiles.drop(1).head should be(FoundationPile(2))
+    result.foundationPiles.drop(2).head should be(FoundationPile(3))
+    result.foundationPiles.drop(3).head should be(FoundationPile(4))
     result.discardPile should be(DiscardPile()) 
     
     discardPile = DiscardPile(Card(Suite.Clubs,1,notHidden),Card(Suite.Clubs,2,notHidden))
@@ -124,5 +127,52 @@ class MoveSpec extends FlatSpec with Matchers {
     result.discardPile should be(DiscardPile())    
   }
   
+  
+"A Move form a tableauPile to a foundationPile" should "add a card to the foundationPile" in {
+    val hidden = true
+    val notHidden = false
+      
+
+    var foundationPile = FoundationPile(1)
+    var tableauPile = TableauPile(1, Card(Suite.Diamonds,1,notHidden)) 
+    var board = BoardBuilder().withTableauPile(0,tableauPile).withFoundationPile(0,foundationPile).build
+    var result = board.makeMove(Move(tableauPile,foundationPile,1))
+    result.foundationPiles.head should be(FoundationPile(1,Card(Suite.Diamonds,1,notHidden)))
+    result.foundationPiles.drop(1).head should be(FoundationPile(2))
+    result.foundationPiles.drop(2).head should be(FoundationPile(3))
+    result.foundationPiles.drop(3).head should be(FoundationPile(4))
+    result.tableauPiles.head should be(TableauPile(1)) 
+    
+    foundationPile = FoundationPile(1)
+    tableauPile = TableauPile(1, Card(Suite.Diamonds,1,notHidden),Card(Suite.Hearts,3,notHidden)) 
+    board = BoardBuilder().withTableauPile(0,tableauPile).withFoundationPile(0,foundationPile).build
+    result = board.makeMove(Move(tableauPile,foundationPile,1))
+    result.foundationPiles.head should be(FoundationPile(1,Card(Suite.Diamonds,1,notHidden)))
+    result.foundationPiles.drop(1).head should be(FoundationPile(2))
+    result.foundationPiles.drop(2).head should be(FoundationPile(3))
+    result.foundationPiles.drop(3).head should be(FoundationPile(4))
+    result.tableauPiles.head should be(TableauPile(1,Card(Suite.Hearts,3,notHidden)))   
+    
+    foundationPile = FoundationPile(1)
+    tableauPile = TableauPile(1, Card(Suite.Diamonds,1,notHidden),Card(Suite.Hearts,3,hidden)) 
+    board = BoardBuilder().withTableauPile(0,tableauPile).withFoundationPile(0,foundationPile).build
+    result = board.makeMove(Move(tableauPile,foundationPile,1))
+    result.foundationPiles.head should be(FoundationPile(1,Card(Suite.Diamonds,1,notHidden)))
+    result.foundationPiles.drop(1).head should be(FoundationPile(2))
+    result.foundationPiles.drop(2).head should be(FoundationPile(3))
+    result.foundationPiles.drop(3).head should be(FoundationPile(4))
+    result.tableauPiles.head should be(TableauPile(1,Card(Suite.Hearts,3,notHidden)))       
+    
+    foundationPile = FoundationPile(1)
+    tableauPile = TableauPile(1, Card(Suite.Diamonds,1,notHidden),Card(Suite.Hearts,3,hidden),Card(Suite.Hearts,5,hidden)) 
+    board = BoardBuilder().withTableauPile(0,tableauPile).withFoundationPile(0,foundationPile).build
+    result = board.makeMove(Move(tableauPile,foundationPile,1))
+    result.foundationPiles.head should be(FoundationPile(1,Card(Suite.Diamonds,1,notHidden)))
+    result.foundationPiles.drop(1).head should be(FoundationPile(2))
+    result.foundationPiles.drop(2).head should be(FoundationPile(3))
+    result.foundationPiles.drop(3).head should be(FoundationPile(4))
+    result.tableauPiles.head should be(TableauPile(1,Card(Suite.Hearts,3,notHidden),Card(Suite.Hearts,5,hidden)))     
+
+  }  
 
 }
