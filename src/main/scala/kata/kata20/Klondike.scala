@@ -156,9 +156,9 @@ case class KlondikeBoard(val stockPile: StockPile, discardPile: DiscardPile, tab
 
   def makeMove(move: Move): KlondikeBoard = {
     
-    def replaceTableauPile(tableauPiles: List[TableauPile],from: TableauPile, to: TableauPile): List[TableauPile] = tableauPiles match {
+    def replacePile[T](piles: List[T],from: T, to: T): List[T] = piles match {
       case Nil => Nil
-      case (t::ts) => (if(t == from) to else t) :: replaceTableauPile(ts, from,to)
+      case (t::ts) => (if(t == from) to else t) :: replacePile(ts, from,to)
     }
 
     def go(move: Move): KlondikeBoard = move match {
@@ -172,11 +172,16 @@ case class KlondikeBoard(val stockPile: StockPile, discardPile: DiscardPile, tab
         val newStock = StockPile(cards)
         val newDiscard = DiscardPile(Nil)
         KlondikeBoard(newStock, newDiscard, tableauPiles, foundationPiles)
-      case Move(DiscardPile(from), TableauPile(to), number) =>
+      case Move(DiscardPile(from), TableauPile(index, to), number) =>
         val cards = from.take(1)
         val newDiscard = DiscardPile(from.drop(1))
-        val newTableau = TableauPile(cards ::: to)
-        KlondikeBoard(stockPile, newDiscard, replaceTableauPile(tableauPiles,TableauPile(to), newTableau), foundationPiles)
+        val newTableau = TableauPile(index, cards ::: to)
+        KlondikeBoard(stockPile, newDiscard, replacePile(tableauPiles,TableauPile(index, to), newTableau), foundationPiles)
+      case Move(DiscardPile(from), FoundationPile(index,to), number) =>
+        val cards = from.take(1)
+        val newDiscard = DiscardPile(from.drop(1))
+        val newFoundationPile = FoundationPile(index, cards ::: to)
+        KlondikeBoard(stockPile, newDiscard, tableauPiles, replacePile(foundationPiles, FoundationPile(index, to), newFoundationPile))
       case _ => ???
     }
 
@@ -190,16 +195,16 @@ sealed trait Pile {
   def cards: List[Card]
 }
 
-case class FoundationPile(override val cards: List[Card]) extends Pile()
+case class FoundationPile(val index: Int, override val cards: List[Card]) extends Pile()
 
 object FoundationPile {
-  def apply(cards: Card*): FoundationPile = FoundationPile(cards.toList)
+  def apply(index: Int, cards: Card*): FoundationPile = FoundationPile(index, cards.toList)
 }
 
-case class TableauPile(override val cards: List[Card]) extends Pile()
+case class TableauPile(val index: Int, override val cards: List[Card]) extends Pile()
 
 object TableauPile {
-  def apply(cards: Card*): TableauPile = TableauPile(cards.toList)
+  def apply(index: Int, cards: Card*): TableauPile = TableauPile(index, cards.toList)
 }
 
 case class DiscardPile(override val cards: List[Card]) extends Pile()
@@ -251,13 +256,13 @@ object KlondikeBoardGenerator {
     } else {
       val cardsForPile = source.take(nrOfPiles).zipWithIndex.map(c => if (c._2 == 0) Card(c._1.suite, c._1.value, false) else c._1)
       val cardsLeft = source.drop(nrOfPiles)
-      new TableauPile(cardsForPile) :: getTableauPiles(cardsLeft, nrOfPiles - 1)
+      new TableauPile(8-nrOfPiles, cardsForPile) :: getTableauPiles(cardsLeft, nrOfPiles - 1)
     }
   }
 
   def generate: KlondikeBoard = {
     val randomCards = shuffelCards(cards)
-    val foundationPiles = (1 to 4).map(i => new FoundationPile(List())).toList
+    val foundationPiles = (1 to 4).map(i => new FoundationPile(i,List())).toList
     val tableauPiles = getTableauPiles(randomCards, 7)
     val discardPile = new DiscardPile(List())
     val stockPile = new StockPile(randomCards.drop(28))
@@ -273,29 +278,39 @@ object Klondike {
     def tableauPile(nr: Int): TableauPile = 
       b.tableauPiles.drop(nr-1).head
     
+    def foundationPile(nr: Int): FoundationPile = 
+      b.foundationPiles.drop(nr-1).head      
+    
+    def getPileIndex(pile: String): Option[Int] = 
+        if(pile.drop(1) != "" && pile.drop(1).forall(Character.isDigit)){
+          Some(pile.drop(1).toInt)
+        } else {
+          None
+        }     
+    
     
     moveAsString.split(" ").toList match {
       case from :: to :: number if from == "s" && to == "d" => Some(Move(b.stockPile, b.discardPile, 1))
       case from :: to :: number if from == "d" && to == "s" => Some(Move(b.discardPile, b.stockPile, b.discardPile.cards.length))
       case from :: to :: number if from == "d" && to.startsWith("t") => 
-        if(to.drop(1) != "" && to.drop(1).forall(Character.isDigit)){
-           Some(Move(b.discardPile, tableauPile(to.drop(1).toInt), 1)) 
-        } else {
-          None
-        }
+        getPileIndex(to).map(i => Move(b.discardPile, tableauPile(i), 1))
+      case from :: to :: number if from == "d" && to.startsWith("f") =>
+        getPileIndex(to).map(i => Move(b.discardPile, foundationPile(i), 1))
       case _ => None
     }
   }
   
+  def indexOfPile(piles: List[Pile], pile:Pile) : Int = 
+    piles.indexOf(pile)+1
 
   def moveToString(b: KlondikeBoard, move: Move): String = move match {
     case Move(DiscardPile(_), StockPile(_), number)      => "DiscardPile" + " => " + "StockPile" + ": " + number
-    case Move(DiscardPile(_), FoundationPile(_), number) => "DiscardPile" + " => " + "FoundationPile" + ": " + number
-    case Move(DiscardPile(_), TableauPile(_), number)    => "DiscardPile" + " => " + "TableauPile" + (b.tableauPiles.indexOf(move.to)+1) + ": " + number
+    case Move(DiscardPile(_), FoundationPile(index,_), number) => "DiscardPile" + " => " + "FoundationPile" + index +  ": " + number
+    case Move(DiscardPile(_), TableauPile(index, _), number)    => "DiscardPile" + " => " + "TableauPile" + index + ": " + number
     case Move(StockPile(_), DiscardPile(_), number)      => "StockPile" + " => " + "DiscardPile" + ": " + number
-    case Move(TableauPile(_), TableauPile(_), number)    => "TableauPile" + " => " + "TableauPile" + ": " + number
-    case Move(TableauPile(_), FoundationPile(_), number) => "TableauPile" + " => " + "FoundationPile" + ": " + number
-    case Move(FoundationPile(_), TableauPile(_), number) => "TableauPile" + " => " + "FoundationPile" + ": " + number
+    case Move(TableauPile(indexFrom, _), TableauPile(indexTo, _), number)    => "TableauPile" + indexFrom +  " => " + "TableauPile" + indexTo + ": " + number
+    case Move(TableauPile(indexFrom, _), FoundationPile(indexTo,_), number) => "TableauPile" + indexFrom + " => " + "FoundationPile" + indexTo + ": " + number
+    case Move(FoundationPile(indexFrom,_), TableauPile(indexTo, _), number) => "FoundationPile" + indexFrom + " => " + "TableauPile" + indexTo + ": " + number
   }
 
   def playGame(game: Game): Unit = {

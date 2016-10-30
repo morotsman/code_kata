@@ -31,40 +31,14 @@ object AsciiBoardRenderer {
 
       val newTableaus = for (
         pile <- piles
-      ) yield (TableauPile(pile.cards.drop(1)))
+      ) yield (TableauPile(pile.index, pile.cards.drop(1)))
 
       renderTableauRow(cards) :: renderTableau(newTableaus)
 
     } else Nil
 
   }
-  /*
-  private def renderTableau(piles: List[TableauPile]): List[String] = piles match {
-    case Nil => Nil
-    case List(TableauPile(a :: as), TableauPile(b :: bs), TableauPile(c :: cs), TableauPile(d :: ds), TableauPile(e :: es), TableauPile(f :: fs), TableauPile(g :: gs)) =>
-      renderTableauRow(a, b, c, d, e, f, g) ::
-        renderTableau(List(TableauPile(as), TableauPile(bs), TableauPile(cs), TableauPile(ds), TableauPile(es), TableauPile(fs)))
-    case List(TableauPile(a :: as), TableauPile(b :: bs), TableauPile(c :: cs), TableauPile(d :: ds), TableauPile(e :: es), TableauPile(f :: fs)) =>
-      renderTableauRow(a, b, c, d, e, f) ::
-        renderTableau(List(TableauPile(as), TableauPile(bs), TableauPile(cs), TableauPile(ds), TableauPile(es)))
-    case List(TableauPile(a :: as), TableauPile(b :: bs), TableauPile(c :: cs), TableauPile(d :: ds), TableauPile(e :: es)) =>
-      renderTableauRow(a, b, c, d, e) ::
-        renderTableau(List(TableauPile(as), TableauPile(bs), TableauPile(cs), TableauPile(ds)))
-    case List(TableauPile(a :: as), TableauPile(b :: bs), TableauPile(c :: cs), TableauPile(d :: ds)) =>
-      renderTableauRow(a, b, c, d) ::
-        renderTableau(List(TableauPile(as), TableauPile(bs), TableauPile(cs)))
-    case List(TableauPile(a :: as), TableauPile(b :: bs), TableauPile(c :: cs)) =>
-      renderTableauRow(a, b, c) ::
-        renderTableau(List(TableauPile(as), TableauPile(bs)))
-    case List(TableauPile(a :: as), TableauPile(b :: bs)) =>
-      renderTableauRow(a, b) ::
-        renderTableau(List(TableauPile(as)))
-    case List(TableauPile(a :: as)) =>
-      renderTableauRow(a) ::
-        renderTableau(List())
 
-  }
-  */
 
   def renderTop(): List[String] =
     List(

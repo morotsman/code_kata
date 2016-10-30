@@ -51,9 +51,9 @@ class KlondikeRulesSpec extends FlatSpec with Matchers {
 
   }
 
-  def emptyFoundationsPiles: List[FoundationPile] = List(new FoundationPile(cards(0)), new FoundationPile(cards(0)), new FoundationPile(cards(0)), new FoundationPile(cards(0)))
+  def emptyFoundationsPiles: List[FoundationPile] = List(FoundationPile(1, cards(0)), FoundationPile(2,cards(0)), FoundationPile(3,cards(0)), FoundationPile(4,cards(0)))
 
-  def emptyTableauPiles: List[TableauPile] = List(new TableauPile(cards(0)), new TableauPile(cards(0)), new TableauPile(cards(0)), new TableauPile(cards(0)), new TableauPile(cards(0)), new TableauPile(cards(0)), new TableauPile(cards(0)))
+  def emptyTableauPiles: List[TableauPile] = List(TableauPile(1,cards(0)), TableauPile(2,cards(0)), TableauPile(3,cards(0)), TableauPile(4,cards(0)), TableauPile(5,cards(0)), TableauPile(6,cards(0)), TableauPile(7,cards(0)))
 
   /**
    * Move a card from the tableau or discard pile to one of the foundation piles.
@@ -80,28 +80,28 @@ class KlondikeRulesSpec extends FlatSpec with Matchers {
     var stockPile = StockPile(Card(Suite.Hearts, 1, true))
 
     var discardPile = DiscardPile(Card(Suite.Clubs, 2, false))
-    val foundationPileWithClubAce = FoundationPile(Card(Suite.Clubs, 1, false))
+    val foundationPileWithClubAce = FoundationPile(1,Card(Suite.Clubs, 1, false))
     var board = BoardBuilder().withStockPile(stockPile).withDiscardPile(discardPile).withTableauPiles(emptyTableauPiles).withFoundationPile(0, foundationPileWithClubAce).build
     board.legalMoves().length should be(2)
     board.legalMoves() should be(List(Move(stockPile, discardPile, 1), Move(discardPile, foundationPileWithClubAce, 1)))
 
     discardPile = DiscardPile(Card(Suite.Clubs, 3, false))
-    val foundationPileWithClubTwo = FoundationPile(Card(Suite.Clubs, 2, false), Card(Suite.Clubs, 1, false))
+    val foundationPileWithClubTwo = FoundationPile(1,Card(Suite.Clubs, 2, false), Card(Suite.Clubs, 1, false))
     board = BoardBuilder().withStockPile(stockPile).withDiscardPile(discardPile).withTableauPiles(emptyTableauPiles).withFoundationPile(0, foundationPileWithClubTwo).build
     board.legalMoves().length should be(2)
     board.legalMoves() should be(List(Move(stockPile, discardPile, 1), Move(discardPile, foundationPileWithClubTwo, 1)))
 
     discardPile = DiscardPile(Card(Suite.Hearts, 2, false))
-    board = BoardBuilder().withStockPile(stockPile).withDiscardPile(discardPile).withTableauPiles(emptyTableauPiles).withFoundationPile(0, new FoundationPile(List(Card(Suite.Clubs, 1, true)))).build
+    board = BoardBuilder().withStockPile(stockPile).withDiscardPile(discardPile).withTableauPiles(emptyTableauPiles).withFoundationPile(0, new FoundationPile(1,List(Card(Suite.Clubs, 1, true)))).build
     board.legalMoves().length should be(1)
 
     discardPile = DiscardPile(Card(Suite.Clubs, 3, false))
-    board = BoardBuilder().withStockPile(stockPile).withDiscardPile(discardPile).withTableauPiles(emptyTableauPiles).withFoundationPile(0, new FoundationPile(List(Card(Suite.Clubs, 1, true)))).build
+    board = BoardBuilder().withStockPile(stockPile).withDiscardPile(discardPile).withTableauPiles(emptyTableauPiles).withFoundationPile(0, new FoundationPile(1,List(Card(Suite.Clubs, 1, true)))).build
     board.legalMoves().length should be(1)
 
     discardPile = DiscardPile(Card(Suite.Clubs, 2, false))
-    val tableauPile = TableauPile(Card(Suite.Diamonds, 2, false))
-    val foundationPileWithDiamondAce = FoundationPile(Card(Suite.Diamonds, 1, false))
+    val tableauPile = TableauPile(4,Card(Suite.Diamonds, 2, false))
+    val foundationPileWithDiamondAce = FoundationPile(2,Card(Suite.Diamonds, 1, false))
     board = BoardBuilder().withStockPile(stockPile).
       withDiscardPile(discardPile).
       withTableauPile(3, tableauPile).
@@ -124,43 +124,43 @@ class KlondikeRulesSpec extends FlatSpec with Matchers {
     var board = BoardBuilder().withDiscardPile(discardPile).withTableauPiles(emptyTableauPiles).withFoundationPiles(emptyFoundationsPiles).build
     board.legalMoves().length should be(0)
 
-    var tableauPile = TableauPile(Card(Suite.Clubs, 9, false), Card(Suite.Hearts, 10, false))
+    var tableauPile = TableauPile(2,Card(Suite.Clubs, 9, false), Card(Suite.Hearts, 10, false))
     discardPile = DiscardPile(Card(Suite.Diamonds, 8, false))
     board = BoardBuilder().withDiscardPile(discardPile).withTableauPile(1, tableauPile).withFoundationPiles(emptyFoundationsPiles).build
     board.legalMoves().length should be(2)
     
-    tableauPile = TableauPile(Card(Suite.Diamonds, 9, false), Card(Suite.Hearts, 10, false))
+    tableauPile = TableauPile(3,Card(Suite.Diamonds, 9, false), Card(Suite.Hearts, 10, false))
     discardPile = DiscardPile(Card(Suite.Spades, 8, false))
     board = BoardBuilder().withDiscardPile(discardPile).withTableauPile(2, tableauPile).withFoundationPiles(emptyFoundationsPiles).build
     board.legalMoves().length should be(2)
 
-    tableauPile = TableauPile(Card(Suite.Diamonds, 9, false), Card(Suite.Hearts, 10, false))
+    tableauPile = TableauPile(2,Card(Suite.Diamonds, 9, false), Card(Suite.Hearts, 10, false))
     discardPile = DiscardPile(Card(Suite.Diamonds, 8, false))
     board = BoardBuilder().withDiscardPile(discardPile).withTableauPile(1, tableauPile).withFoundationPiles(emptyFoundationsPiles).build
     board.legalMoves().length should be(1)
 
-    tableauPile = TableauPile(Card(Suite.Diamonds, 9, false), Card(Suite.Hearts, 10, false))
+    tableauPile = TableauPile(4,Card(Suite.Diamonds, 9, false), Card(Suite.Hearts, 10, false))
     discardPile = DiscardPile(Card(Suite.Hearts, 8, false))
     board = BoardBuilder().withDiscardPile(discardPile).withTableauPile(3, tableauPile).withFoundationPiles(emptyFoundationsPiles).build
     board.legalMoves().length should be(1)
     
     
-    tableauPile = TableauPile(Card(Suite.Hearts, 9, false), Card(Suite.Clubs, 10, false))
+    tableauPile = TableauPile(5,Card(Suite.Hearts, 9, false), Card(Suite.Clubs, 10, false))
     discardPile = DiscardPile(Card(Suite.Clubs, 8, false))
     board = BoardBuilder().withDiscardPile(discardPile).withTableauPile(4, tableauPile).withFoundationPiles(emptyFoundationsPiles).build
     board.legalMoves().length should be(2)
     
-    tableauPile = TableauPile(Card(Suite.Hearts, 9, false), Card(Suite.Hearts, 10, false))
+    tableauPile = TableauPile(6,Card(Suite.Hearts, 9, false), Card(Suite.Hearts, 10, false))
     discardPile = DiscardPile(Card(Suite.Spades, 8, false))
     board = BoardBuilder().withDiscardPile(discardPile).withTableauPile(5, tableauPile).withFoundationPiles(emptyFoundationsPiles).build
     board.legalMoves().length should be(2)
 
-    tableauPile = TableauPile(Card(Suite.Hearts, 9, false), Card(Suite.Hearts, 10, false))
+    tableauPile = TableauPile(7,Card(Suite.Hearts, 9, false), Card(Suite.Hearts, 10, false))
     discardPile = DiscardPile(Card(Suite.Diamonds, 8, false))
     board = BoardBuilder().withDiscardPile(discardPile).withTableauPile(6, tableauPile).withFoundationPiles(emptyFoundationsPiles).build
     board.legalMoves().length should be(1)
 
-    tableauPile = TableauPile(Card(Suite.Hearts, 9, false), Card(Suite.Hearts, 10, false))
+    tableauPile = TableauPile(1,Card(Suite.Hearts, 9, false), Card(Suite.Hearts, 10, false))
     discardPile = DiscardPile(Card(Suite.Hearts, 8, false))
     board = BoardBuilder().withDiscardPile(discardPile).withTableauPile(0, tableauPile).withFoundationPiles(emptyFoundationsPiles).build
     board.legalMoves().length should be(1)    
@@ -181,44 +181,44 @@ class KlondikeRulesSpec extends FlatSpec with Matchers {
     var board = BoardBuilder().withDiscardPile(discardPile).withTableauPiles(emptyTableauPiles).withFoundationPiles(emptyFoundationsPiles).build
     board.legalMoves().length should be(0)
     
-    var tableauPile1 = TableauPile(Card(Suite.Hearts, 9, notHidden), Card(Suite.Spades, 10, hidden))
-    var tableauPile2 = TableauPile(Card(Suite.Spades, 8, hidden))
+    var tableauPile1 = TableauPile(3,Card(Suite.Hearts, 9, notHidden), Card(Suite.Spades, 10, hidden))
+    var tableauPile2 = TableauPile(4,Card(Suite.Spades, 8, hidden))
     board = BoardBuilder().withDiscardPile(discardPile).withTableauPile(2, tableauPile1).withTableauPile(3, tableauPile2).withFoundationPiles(emptyFoundationsPiles).build
     board.legalMoves().length should be(0) 
     
-    tableauPile1 = TableauPile(Card(Suite.Hearts, 9, notHidden), Card(Suite.Spades, 10, hidden))
-    tableauPile2 = TableauPile(Card(Suite.Diamonds, 8, hidden))
+    tableauPile1 = TableauPile(3,Card(Suite.Hearts, 9, notHidden), Card(Suite.Spades, 10, hidden))
+    tableauPile2 = TableauPile(4,Card(Suite.Diamonds, 8, hidden))
     board = BoardBuilder().withDiscardPile(discardPile).withTableauPile(2, tableauPile1).withTableauPile(3, tableauPile2).withFoundationPiles(emptyFoundationsPiles).build
     board.legalMoves().length should be(0)           
     
-    tableauPile1 = TableauPile(Card(Suite.Hearts, 9, notHidden), Card(Suite.Spades, 10, hidden))
-    tableauPile2 = TableauPile(Card(Suite.Spades, 8, notHidden))
+    tableauPile1 = TableauPile(3,Card(Suite.Hearts, 9, notHidden), Card(Suite.Spades, 10, hidden))
+    tableauPile2 = TableauPile(4,Card(Suite.Spades, 8, notHidden))
     board = BoardBuilder().withDiscardPile(discardPile).withTableauPile(2, tableauPile1).withTableauPile(3, tableauPile2).withFoundationPiles(emptyFoundationsPiles).build
     board.legalMoves().length should be(1) 
     
-    tableauPile1 = TableauPile(Card(Suite.Hearts, 9, notHidden), Card(Suite.Spades, 10, hidden))
-    tableauPile2 = TableauPile(Card(Suite.Spades, 8, notHidden))
+    tableauPile1 = TableauPile(3,Card(Suite.Hearts, 9, notHidden), Card(Suite.Spades, 10, hidden))
+    tableauPile2 = TableauPile(4,Card(Suite.Spades, 8, notHidden))
     board = BoardBuilder().withDiscardPile(discardPile).withTableauPile(2, tableauPile1).withTableauPile(3, tableauPile2).withFoundationPiles(emptyFoundationsPiles).build
     board.legalMoves().length should be(1)     
     
-    tableauPile1 = TableauPile(Card(Suite.Hearts, 9, notHidden), Card(Suite.Spades, 10, hidden))
-    tableauPile2 = TableauPile(Card(Suite.Hearts, 7, notHidden),Card(Suite.Spades, 8, notHidden))
+    tableauPile1 = TableauPile(3,Card(Suite.Hearts, 9, notHidden), Card(Suite.Spades, 10, hidden))
+    tableauPile2 = TableauPile(4,Card(Suite.Hearts, 7, notHidden),Card(Suite.Spades, 8, notHidden))
     board = BoardBuilder().withDiscardPile(discardPile).withTableauPile(2, tableauPile1).withTableauPile(3, tableauPile2).withFoundationPiles(emptyFoundationsPiles).build
     board.legalMoves().length should be(1)  
     
-    tableauPile1 = TableauPile(Card(Suite.Hearts, 9, notHidden), Card(Suite.Spades, 10, hidden))
-    tableauPile2 = TableauPile(Card(Suite.Hearts, 7, notHidden),Card(Suite.Spades, 8, hidden))
+    tableauPile1 = TableauPile(3,Card(Suite.Hearts, 9, notHidden), Card(Suite.Spades, 10, hidden))
+    tableauPile2 = TableauPile(4,Card(Suite.Hearts, 7, notHidden),Card(Suite.Spades, 8, hidden))
     board = BoardBuilder().withDiscardPile(discardPile).withTableauPile(2, tableauPile1).withTableauPile(3, tableauPile2).withFoundationPiles(emptyFoundationsPiles).build
     board.legalMoves().length should be(0)     
     
-    tableauPile1 = TableauPile(Card(Suite.Hearts, 9, notHidden), Card(Suite.Spades, 10, hidden))
-    tableauPile2 = TableauPile(Card(Suite.Spades, 8, notHidden))
-    var tableauPile3 = TableauPile(Card(Suite.Clubs, 8, notHidden))
+    tableauPile1 = TableauPile(3,Card(Suite.Hearts, 9, notHidden), Card(Suite.Spades, 10, hidden))
+    tableauPile2 = TableauPile(4,Card(Suite.Spades, 8, notHidden))
+    var tableauPile3 = TableauPile(5,Card(Suite.Clubs, 8, notHidden))
     board = BoardBuilder().withDiscardPile(discardPile).withTableauPile(2, tableauPile1).withTableauPile(3, tableauPile2).withTableauPile(4, tableauPile3).withFoundationPiles(emptyFoundationsPiles).build
     board.legalMoves().length should be(2)    
     
-    tableauPile1 = TableauPile(Card(Suite.Hearts, 9, notHidden), Card(Suite.Spades, 10, notHidden))
-    tableauPile2 = TableauPile(Card(Suite.Hearts, 9, notHidden))
+    tableauPile1 = TableauPile(2,Card(Suite.Hearts, 9, notHidden), Card(Suite.Spades, 10, notHidden))
+    tableauPile2 = TableauPile(3,Card(Suite.Hearts, 9, notHidden))
     board = BoardBuilder().withDiscardPile(discardPile).withTableauPile(2, tableauPile1).withTableauPile(3, tableauPile2).withFoundationPiles(emptyFoundationsPiles).build
     board.legalMoves().length should be(0)     
   }
@@ -244,27 +244,27 @@ class KlondikeRulesSpec extends FlatSpec with Matchers {
     board = BoardBuilder().withDiscardPile(discardPile).build
     board.legalMoves().length should be(1)   
     
-    var foundationPile = FoundationPile(Card(Suite.Hearts, 13, notHidden))
+    var foundationPile = FoundationPile(3,Card(Suite.Hearts, 13, notHidden))
     board = BoardBuilder().withFoundationPile(2, foundationPile).build
     board.legalMoves().length should be(7)    
     
-    foundationPile = FoundationPile(Card(Suite.Hearts, 12, notHidden), Card(Suite.Hearts, 13, notHidden))
+    foundationPile = FoundationPile(3,Card(Suite.Hearts, 12, notHidden), Card(Suite.Hearts, 13, notHidden))
     board = BoardBuilder().withFoundationPile(2, foundationPile).build
     board.legalMoves().length should be(0)     
     
-    var tableauPile = TableauPile(Card(Suite.Hearts, 13, hidden))
+    var tableauPile = TableauPile(3,Card(Suite.Hearts, 13, hidden))
     board = BoardBuilder().withTableauPile(2, tableauPile).build
     board.legalMoves().length should be(0) 
     
-    tableauPile = TableauPile(Card(Suite.Hearts, 13, notHidden))
+    tableauPile = TableauPile(3,Card(Suite.Hearts, 13, notHidden))
     board = BoardBuilder().withTableauPile(2, tableauPile).build
     board.legalMoves().length should be(6)  
     
-    tableauPile = TableauPile(Card(Suite.Hearts, 12, notHidden),Card(Suite.Hearts, 13, hidden))
+    tableauPile = TableauPile(3,Card(Suite.Hearts, 12, notHidden),Card(Suite.Hearts, 13, hidden))
     board = BoardBuilder().withTableauPile(2, tableauPile).build
     board.legalMoves().length should be(0)  
     
-    tableauPile = TableauPile(Card(Suite.Hearts, 12, notHidden),Card(Suite.Hearts, 13, notHidden),Card(Suite.Hearts, 8, hidden))
+    tableauPile = TableauPile(3,Card(Suite.Hearts, 12, notHidden),Card(Suite.Hearts, 13, notHidden),Card(Suite.Hearts, 8, hidden))
     board = BoardBuilder().withTableauPile(2, tableauPile).build
     board.legalMoves().length should be(6)    
     
