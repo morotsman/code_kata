@@ -202,7 +202,10 @@ case class KlondikeBoard(val stockPile: StockPile, discardPile: DiscardPile, tab
         val piles2 = replacePile(piles, TableauPile(indexTo, to), newTo)
           
         KlondikeBoard(stockPile,discardPile,piles2,foundationPiles)
-      case _ => ???
+      case Move(FoundationPile(indexFrom,from), TableauPile(indexTo,to),_) =>
+        val newFoundation = FoundationPile(indexFrom,from.drop(1))
+        val newTableau = TableauPile(indexTo, from.take(1) ::: to)
+        KlondikeBoard(stockPile, discardPile, replacePile(tableauPiles,TableauPile(indexTo, to), newTableau), replacePile(foundationPiles, FoundationPile(indexFrom, from),newFoundation))
     }
 
     go(move)
@@ -214,27 +217,36 @@ case class KlondikeBoard(val stockPile: StockPile, discardPile: DiscardPile, tab
 
 sealed trait Pile {
   def cards: List[Card]
+  def shortDescription:String
 }
 
-case class FoundationPile(val index: Int, override val cards: List[Card]) extends Pile()
+case class FoundationPile(val index: Int, override val cards: List[Card]) extends Pile() {
+  def shortDescription:String = "f" + index
+}
 
 object FoundationPile {
   def apply(index: Int, cards: Card*): FoundationPile = FoundationPile(index, cards.toList)
 }
 
-case class TableauPile(val index: Int, override val cards: List[Card]) extends Pile()
+case class TableauPile(val index: Int, override val cards: List[Card]) extends Pile() {
+   def shortDescription:String = "t" + index
+}
 
 object TableauPile {
   def apply(index: Int, cards: Card*): TableauPile = TableauPile(index, cards.toList)
 }
 
-case class DiscardPile(override val cards: List[Card]) extends Pile()
+case class DiscardPile(override val cards: List[Card]) extends Pile(){
+  def shortDescription:String = "d" 
+}
 
 object DiscardPile {
   def apply(cards: Card*): DiscardPile = DiscardPile(cards.toList)
 }
 
-case class StockPile(override val cards: List[Card]) extends Pile()
+case class StockPile(override val cards: List[Card]) extends Pile(){
+  def shortDescription:String = "s" 
+}
 
 object StockPile {
   def apply(cards: Card*): StockPile = StockPile(cards.toList)
@@ -331,24 +343,22 @@ object Klondike {
           fromIndex <- getPileIndex(from);
           toIndex <- getPileIndex(to);
           numberOfCards <- toInt(number.mkString)
-        ) yield(Move(tableauPile(fromIndex), tableauPile(toIndex),numberOfCards))        
+        ) yield(Move(tableauPile(fromIndex), tableauPile(toIndex),numberOfCards))   
+      case from :: to :: number if from.startsWith("f") && to.startsWith("t") => 
+        for(
+          fromIndex <- getPileIndex(from);
+          toIndex <- getPileIndex(to)
+        ) yield(Move(foundationPile(fromIndex), tableauPile(toIndex),1))          
       case _ => None
     }
   }
 
-  def moveToString(b: KlondikeBoard, move: Move): String = move match {
-    case Move(DiscardPile(_), StockPile(_), number)      => "d" + " => " + "s" + ": " + number
-    case Move(DiscardPile(_), FoundationPile(index,_), number) => "d" + " => " + "f" + index +  ": " + number
-    case Move(DiscardPile(_), TableauPile(index, _), number)    => "d" + " => " + "t" + index + ": " + number
-    case Move(StockPile(_), DiscardPile(_), number)      => "s" + " => " + "d" + ": " + number
-    case Move(TableauPile(indexFrom, _), TableauPile(indexTo, _), number)    => "t" + indexFrom +  " => " + "t" + indexTo + ": " + number
-    case Move(TableauPile(indexFrom, _), FoundationPile(indexTo,_), number) => "t" + indexFrom + " => " + "f" + indexTo + ": " + number
-    case Move(FoundationPile(indexFrom,_), TableauPile(indexTo, _), number) => "f" + indexFrom + " => " + "t" + indexTo + ": " + number
-  }
+  def moveToString(move: Move): String = 
+    move.from.shortDescription + " " + move.to.shortDescription + " " + move.numberOfCards
 
   def playGame(game: Game): Unit = {
     game.renderBoard
-    println(game.board.legalMoves.map(m => moveToString(game.board,m)))
+    println(game.board.legalMoves.map(m => moveToString(m)))
 
     //get move from user
     val moveFromUser = scala.io.StdIn.readLine("Make move>")
